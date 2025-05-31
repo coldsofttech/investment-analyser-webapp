@@ -1,0 +1,34 @@
+name: Deploy to GitHub Pages
+
+on:
+ push:
+  branches:
+   - main
+   - test
+
+permissions:
+ contents: write
+ pages: write
+
+jobs:
+ build-and-deploy:
+  runs-on: ubuntu-latest
+  env:
+   TARGET_REPO: ${{ github.ref_name == 'main' && 'coldsofttech/investment-analyser/' || 'coldsofttech/investment-analyser-test/' }}
+   TARGET_BRANCH: gh-pages
+   TARGET_PAT: ${{ secrets.TARGET_REPO_PAT_TEST }}
+  steps:
+   - name: Checkout
+     uses: actions/checkout@v3
+    
+   - name: Bypass Jekyll Processing
+     run: |
+      touch docs/.nojekyll
+
+   - name: Deploy to GitHub Pages
+     uses: peaceiris/actions-gh-pages@v4
+     with:
+      external_repository: ${{ env.TARGET_REPO }}
+      personal_token: ${{ env.TARGET_PAT }}
+      publish_dir: docs
+      publish_branch: ${{ env.TARGET_BRANCH }}
