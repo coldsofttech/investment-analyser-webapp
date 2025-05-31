@@ -3,7 +3,7 @@ let auth0Client = null;
 const configureAuth0Client = async() => {
     if (auth0Client) return;
 
-    const response = await fetch('/static/js/auth0-config.json');
+    const response = await fetch(`${getRootPath()}/static/js/auth0-config.json`);
     const config = await response.json();
     auth0Client = await auth0.createAuth0Client({
         domain: config.domain,
