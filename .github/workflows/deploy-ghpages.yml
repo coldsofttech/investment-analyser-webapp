@@ -17,7 +17,7 @@ jobs:
    TARGET_REPO: ${{ github.ref_name == 'main' && 'coldsofttech/investment-analyser' || 'coldsofttech/investment-analyser-test' }}
    TARGET_BRANCH: gh-pages
    TARGET_PAT: ${{ secrets.TARGET_REPO_PAT_TEST }}
-   CONFIG_REPO: coldsofttech/investment-analyser-config
+   CONFIG_REPO: coldsofttech/investment-analyser-auth0
    BRANCH_NAME: ${{ github.ref_name }}
   steps:
    - name: Checkout
