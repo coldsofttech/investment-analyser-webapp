@@ -3,22 +3,14 @@ let auth0Client = null;
 const configureAuth0Client = async() => {
     if (auth0Client) return;
 
-    try {
-        const response = await fetch('auth0-config.json');
-        if (!response.ok) {
-            return displayError('Failed to load Auth0 configurations.');
-        }
-
-        const config = await response.json();
-        auth0Client = await auth0.createAuth0Client({
-            domain: config.domain,
-            clientId: config.clientId,
-            cacheLocation: "localstorage",
-            useRefreshTokens: true
-        });
-    } catch (err) {
-        return displayError('Unable to configure Auth0.');
-    }
+    const response = await fetch('/static/js/auth0-config.json');
+    const config = await response.json();
+    auth0Client = await auth0.createAuth0Client({
+        domain: config.domain,
+        clientId: config.clientId,
+        cacheLocation: "localstorage",
+        useRefreshTokens: true
+    });
 };
 
 const isAuth0Authenticated = async() => {
