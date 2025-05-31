@@ -40,18 +40,23 @@ jobs:
       fi
 
       echo "Found workflow run ID: $run_id"
-      echo "Downloading artifacts..."
+      artifacts_url="https://api.github.com/repos/${CONFIG_REPO}/actions/runs/${run_id}/artifacts"
+      artifact_url=$(curl -s -H "Authorization: token ${{ env.TARGET_PAT }}" $artifacts_url | jq -r '.artifacts[0].archive_download_url')
+
+      if [ "$artifact_url" == "null" ]; then
+       echo "❌ No artifact found in workflow run $run_id"
+       exit 1
+      fi
+
+      echo "Downloading artifact from $artifact_url..."
       mkdir -p config-artifacts
-      curl -L -H "Authorization: token ${{ env.TARGET_PAT }}" \
-        -o config-artifacts/artifact.zip \
-        https://api.github.com/repos/${CONFIG_REPO}/actions/runs/${run_id}/artifacts | jq -r '.artifacts[0].archive_download_url' | xargs -I{} curl -L -H "Authorization: token ${{ env.TARGET_PAT }}" -o config-artifacts/artifact.zip "{}"
-    
+      curl -L -H "Authorization: token ${{ env.TARGET_PAT }}" -o config-artifacts/artifact.zip "$artifact_url"
+
       echo "Unzipping..."
-      unzip config-artifacts/artifact.zip -d config-artifacts
-      cd config-artifacts
-      ls -l
-      echo "Moving auth0-config.json to docs/static/js"
-      mv config-artifacts/auth0-config.${{ env.BRANCH_NAME }}.json docs/static/js/
+      unzip -o config-artifacts/artifact.zip -d config-artifacts
+
+      echo "Moving auth0-config.json to docs/"
+      mv config-artifacts/auth0-config.${{ env.BRANCH_NAME }}.json docs/
     
    - name: Bypass Jekyll Processing
      run: |
