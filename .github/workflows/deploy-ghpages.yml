@@ -55,8 +55,8 @@ jobs:
       echo "Unzipping..."
       unzip -o config-artifacts/artifact.zip -d config-artifacts
 
-      echo "Moving auth0-config.json to docs/"
-      mv config-artifacts/auth0-config.${{ env.BRANCH_NAME }}.json docs/
+      echo "Moving auth0-config.json to docs/static/js"
+      mv config-artifacts/auth0-config.${{ env.BRANCH_NAME }}.json docs/static/js/auth0-config.json
     
    - name: Bypass Jekyll Processing
      run: |
