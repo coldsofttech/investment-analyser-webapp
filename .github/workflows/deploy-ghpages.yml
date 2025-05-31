@@ -14,7 +14,7 @@ jobs:
  build-and-deploy:
   runs-on: ubuntu-latest
   env:
-   TARGET_REPO: ${{ github.ref_name == 'main' && 'coldsofttech/investment-analyser.git' || 'coldsofttech/investment-analyser-test.git' }}
+   TARGET_REPO: ${{ github.ref_name == 'main' && 'coldsofttech/investment-analyser' || 'coldsofttech/investment-analyser-test' }}
    TARGET_BRANCH: gh-pages
    TARGET_PAT: ${{ secrets.TARGET_REPO_PAT_TEST }}
   steps:
