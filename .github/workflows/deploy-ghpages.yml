@@ -46,6 +46,7 @@ jobs:
         -o config-artifacts/artifact.zip \
         https://api.github.com/repos/${CONFIG_REPO}/actions/runs/${run_id}/artifacts | jq -r '.artifacts[0].archive_download_url' | xargs -I{} curl -L -H "Authorization: token ${{ env.TARGET_PAT }}" -o config-artifacts/artifact.zip "{}"
     
+      ls -l
       echo "Unzipping..."
       unzip config-artifacts/artifact.zip -d config-artifacts
       echo "Moving auth0-config.json to docs/static/js"
