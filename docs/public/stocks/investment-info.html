@@ -32,7 +32,7 @@
             const currentContent = `
                 <div class="text-right">
                     ${await formatCurrency(currentValue, defaultCurrency)}<br>
-                    <i class="optional-text">(${stocksOwned} * ${await formatCurrency((currentPrice * fxRate), defaultCurrency)})</i>
+                    <i class="optional-text">(${stocksOwned} * ${await formatCurrency((priceInfo?.currentPrice * fxRate), defaultCurrency)})</i>
                 </div>
             `;
             const growthContent = `
