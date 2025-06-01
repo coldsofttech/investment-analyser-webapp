@@ -1,11 +1,14 @@
 class Ticker {
-    constructor(ticker, stocksOwned = null, avgPrice = null) {
+    constructor(ticker, defaultCurrency, stocksOwned = null, avgPrice = null) {
         this.tickerCode = ticker;
+        this.defaultCurrency = defaultCurrency;
         this.stocksOwned = stocksOwned;
         this.avgPrice = avgPrice;
         this.error = null;
         this.api = null;
         this.companyInfo = null;
+        this.priceInfo = null;
+        this.fxRate = null;
     }
 
     async init() {
@@ -17,6 +20,8 @@ class Ticker {
             };
 
             this.companyInfo = await this._getCompanyInformation();
+            this.priceInfo = await this._getPriceInformation();
+            this.fxRate = await this._getFXRate();
             this.error = null;
         } catch(err) {
             this.error = {
@@ -58,6 +63,28 @@ class Ticker {
             return data.info;
         } catch (err) {
             throw new Error(`Company info fetch failed: ${err.message}`);
+        }
+    }
+
+    async _getPriceInformation() {
+        try {
+            const url = `${this.api?.config?.domain}/tickers/${this.tickerCode}?fields=priceInfo`;
+            const data = await fetchWithCache(url, this.api?.headers);
+
+            return data.priceInfo;
+        } catch (err) {
+            throw new Error(`Price info fetch failed: ${err.message}`);
+        }
+    }
+
+    async _getFXRate() {
+        try {
+            const url = `${this.api?.config?.domain}/fxrates/${this.defaultCurrency.defaultCurrency}${this.companyInfo?.currency}?fields=conversionRate`;
+            const data = await fetchWithCache(url, this.api?.headers);
+
+            return data.conversionRate;
+        } catch (err) {
+            throw new Error(`FX Rate fetch failed: ${err.message}`);
         }
     }
 }
