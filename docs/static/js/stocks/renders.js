@@ -69,6 +69,7 @@ async function renderDataTable({
     columns,
     hiddenColumns = [],
     rightAlignColumns = [],
+    sortable = false,
     searching = false,
     paging = false,
     lengthChange = false,
@@ -86,6 +87,7 @@ async function renderDataTable({
         autoWidth,
         destroy: true,
         columnDefs: [
+            { targets: '_all', orderable: sortable === true },
             ...hiddenColumns.map(index => ({
                 targets: index, visible: false, searchable: false
             })),
