@@ -73,6 +73,8 @@
                 $userContainer.text(user.name);
                 $dropdownContainer.removeClass('d-none');
                 $loginContainer.addClass('d-none');
+
+                await getDefaultCurrency();
             } else {
                 $dropdownContainer.addClass('d-none');
                 $loginContainer.removeClass('d-none');
