@@ -135,6 +135,10 @@
                     defaultCurrency = getCurrency(localStorage.getItem('defaultCurrency'));
                 }
 
+                if (defaultCurrency.currency === 'Unknown') {
+                    defaultCurrency = getCurrency('GBP');
+                }
+
                 return defaultCurrency;
             }
         
