@@ -1,0 +1,48 @@
+<nav class="navbar navbar-expand-lg navbar-light custom-breadcrumb mt-3 mb-4">
+    <div class="container-fluid">
+        <a id="nav-menu" class="navbar-brand">Menu</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" 
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse navbar-mobile" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" 
+                       aria-expanded="false">Stocks Analyser</a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li>
+                            <a class="dropdown-item" href="/investment-analyser/stocks/input.html">
+                                <i class="bi bi-graph-up"></i><span class="padding">Stocks</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/investment-analyser/stocks/pie">
+                                <i class="bi bi-pie-chart"></i><span class="padding">Pie <i>(Portfolios)</i></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#"><span class="padding-extra">New Pie</span></a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#"><span class="padding-extra">Load Pie</span></a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<script>
+    document.addEventListener('menuReady', async function() {
+        const appRootPath = getRootPath();
+        const links = {
+            'nav-menu': 'menu.html'
+        };
+
+        for (const [id, path] of Object.entries(links)) {
+            $(element).attr('href', `${appRootPath}${path}`);
+        }
+    });
+</script>
