@@ -132,7 +132,9 @@
 
                 $('#companyinfo-placeholder').load('../public/stocks/company-info.html', async function() {
                     document.dispatchEvent(new CustomEvent('companyInfoReady', {
-                        info: data
+                        detail: {
+                            info: data
+                        }
                     }));
                 });
             }
