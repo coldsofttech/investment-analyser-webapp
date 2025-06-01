@@ -79,6 +79,11 @@
             setAttr('website', 'href', info?.website);
             setAttr('website', 'aria-label', `Visit ${info?.companyName} website.`);
             setText('type', info?.type);
+            setText('dividendYield', await formatOrNA(info?.dividendYield, formatPercentage));
+            setText('dividendPayoutRatio', await formatOrNA(info?.payoutRatio, formatPercentage));
+            setText('dividendFrequency', info?.dividendFrequency ?? 'N/A');
+            setText('volatility', await formatOrNA(info?.volatility, formatPercentage));
+            setText('beta', info?.beta?.toFixed(2));
 
             if (stocksOwned > 0) {
                 setVisible($stocksOwnedContainer, true);
