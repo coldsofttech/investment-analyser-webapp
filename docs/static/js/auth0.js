@@ -68,8 +68,8 @@ const getAuth0UserInfo = async() => {
 
 const verifyAuth0Authentication = async() => {
     await configureAuth0Client();
-    await handleAuth0RedirectCallback();
-    await requireAuth();
+    // await handleAuth0RedirectCallback();
+    // await requireAuth();
 }
 
 async function initLoginButton() {
