@@ -63,8 +63,7 @@ class Ticker {
             }
 
             const data = await response.json();
-            console.log(data);
-            return data;
+            return data.info;
         } catch (err) {
             throw new Error(`Company info fetch failed: ${err.message}`);
         }
