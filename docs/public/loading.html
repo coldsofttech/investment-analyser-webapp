@@ -6,7 +6,7 @@
 
 <script>
     document.addEventListener('loadingOverlayReady', async function(event) {
-        const message = event.message;
+        const message = event.detail?.message;
 
         if (message) {
             $('#loadingOverlayMessage').text(message);
