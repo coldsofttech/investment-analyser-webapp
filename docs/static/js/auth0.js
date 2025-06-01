@@ -25,10 +25,9 @@ const updateAuth0UI = async() => {
 };
 
 const loginAuth0 = async() => {
-    console.log(`${window.location.origin}${getRootPath()}menu.html`);
     await auth0Client.loginWithRedirect({
         authorizationParams: {
-            redirect_uri: `${window.location.origin}/${getRootPath()}/menu.html`
+            redirect_uri: `${window.location.origin}${getRootPath()}menu.html`
         }
     });
 };
@@ -36,7 +35,7 @@ const loginAuth0 = async() => {
 const logoutAuth0 = async() => {
     await auth0Client.logout({
         logoutParams: {
-            returnTo: `${window.location.origin}/${getRootPath()}/index.html`
+            returnTo: `${window.location.origin}${getRootPath()}index.html`
         }
     });
 };
@@ -47,10 +46,10 @@ const handleAuth0RedirectCallback = async() => {
         try {
             await auth0Client.handleRedirectCallback();
             updateAuth0UI();
-            window.history.replaceState({}, document.title, `/${getRootPath()}/menu.html`);
+            window.history.replaceState({}, document.title, `${getRootPath()}menu.html`);
         } catch (err) {
             const msg = encodeURIComponent(err.error_description || err.message || "Unknown login error.");
-            window.location.href = `/${getRootPath()}/index.html?error=${msg}`;
+            window.location.href = `${getRootPath()}index.html?error=${msg}`;
         }
     }
 };
@@ -59,7 +58,7 @@ const requireAuth = async() => {
     const isAuthenticated = await auth0Client.isAuthenticated();
     if (!isAuthenticated) {
         const msg = encodeURIComponent("Unable to authenticate. Please contact the administrator.");
-        window.location.href = `/${getRootPath()}/index.html?error=${msg}`;
+        window.location.href = `${getRootPath()}index.html?error=${msg}`;
     }
 };
 
