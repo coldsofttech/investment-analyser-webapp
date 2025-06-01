@@ -208,7 +208,7 @@
         
             async function showLineChart(stockData, fxRate, avgPrice, defaultCurrency) {
                 const dates = stockData.map(i => i.date);
-                const prices = stockData.map(i => i.price * fxRate);
+                const prices = stockData.map(i => i.price);
                 const chartData = {
                     series: [{
                         dates: dates,
