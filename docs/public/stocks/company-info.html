@@ -54,11 +54,11 @@
 
 <script>
     document.addEventListener('companyInfoReady', async function(event) {
-        const info = event.info;
-        const fxRate = event.fxRate;
-        const stocksOwned = event.stocksOwned;
-        const avgPrice = event.avgPrice;
-        const currentPrice = event.currentPrice;
+        const info = event.detail?.info;
+        const fxRate = event.detail?.fxRate;
+        const stocksOwned = event.detail?.stocksOwned;
+        const avgPrice = event.detail?.avgPrice;
+        const currentPrice = event.detail?.currentPrice;
 
         if (info) {
             const setText = (id, text) => $(`#${id}`).text(text);
