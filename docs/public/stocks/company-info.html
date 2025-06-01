@@ -54,6 +54,7 @@
 
 <script>
     document.addEventListener('companyInfoReady', async function(event) {
+        console.log(event);
         const $stocksOwnedContainer = $('#stocksOwnedContainer');
         const $avgPriceContainer = $('#avgPriceContainer');
 
@@ -61,7 +62,7 @@
         const fxRate = event.detail?.fxRate;
         const stocksOwned = event.detail?.stocksOwned;
         const avgPrice = event.detail?.avgPrice;
-        const currentPrice = event.detail?.currentPrice;
+        const priceInfo = event.detail?.priceInfo;
         const defaultCurrency = event.detail?.defaultCurrency;
 
         if (info) {
