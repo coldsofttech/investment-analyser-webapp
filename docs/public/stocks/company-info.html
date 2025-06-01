@@ -86,7 +86,7 @@
             setText('volatility', await formatOrNA(info?.volatility, formatPercentage));
             setText('beta', info?.beta?.toFixed(2));
             setText('marketCap', await formatCurrency(info?.marketCap * fxRate, defaultCurrency, true));
-            setText('currentPrice', await formatCurrency(currentPrice * fxRate, defaultCurrency, true));
+            setText('currentPrice', await formatCurrency(priceInfo?.currentPrice * fxRate, defaultCurrency, true));
 
             if (stocksOwned > 0) {
                 setVisible($stocksOwnedContainer, true);

@@ -517,6 +517,10 @@ input:checked + .slider:before {
         font-size: 1.75em;
     }
 
+    .logo {
+        height: 40px;
+    }
+
     .plotly-chart {
         height: 300px;
     }

@@ -79,7 +79,7 @@ class Ticker {
 
     async _getFXRate() {
         try {
-            const url = `${this.api?.config?.domain}/fxrates/${this.defaultCurrency.currency}${this.companyInfo?.currency}?fields=conversionRate`;
+            const url = `${this.api?.config?.domain}/fxrates/${this.companyInfo?.currency}${this.defaultCurrency.currency}?fields=conversionRate`;
             const data = await fetchWithCache(url, this.api?.headers);
 
             return data.conversionRate;
