@@ -3,18 +3,36 @@
 </div>
 
 <script>
-    document.addEventListener('lineChartReady', async function(event) {
-        const data = event.detail?.data;
-        const title = event.detail?.title;
-        const currency = event.detail?.currency;
-        const showLegend = event.detail?.showLegend || false;
+    let chartData = null;
+    let chartTitle = null;
+    let chartCurrency = null;
+    let chartShowLegend = false;
+
+    async function renderResponsiveChart() {
+        if (!chartData) {
+            return;
+        }
 
         await renderLineChart({
             chartId: 'stockInfoChart',
-            chartTitle: title,
-            data: data,
-            currency: currency,
-            showLegend: showLegend
+            chartTitle: chartTitle,
+            data: chartData,
+            currency: chartCurrency,
+            showLegend: chartShowLegend,
+            showRangeSlider: !isMobileView()
         });
+    }
+
+    document.addEventListener('lineChartReady', async function(event) {
+        chartData = event.detail?.data;
+        chartTitle = event.detail?.title || '';
+        chartCurrency = event.detail?.currency || '';
+        chartShowLegend = event.detail?.showLegend || false;
+
+        await renderResponsiveChart();
+    });
+
+    window.addEventListener('resize', () => {
+        renderResponsiveChart();
     });
 </script>
