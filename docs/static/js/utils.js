@@ -3,6 +3,10 @@ function getRootPath() {
     return rootFolder ? `/${rootFolder}/` : '/';
 }
 
+function isMobileView() {
+    return window.innerWidth < 768;
+}
+
 async function formatCurrency(value, defaultCurrency, fullSymbol = false) {
     const suffixes = ['', 'k', 'm', 'b', 't'];
     let magnitude = 0;
