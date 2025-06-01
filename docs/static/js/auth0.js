@@ -25,7 +25,7 @@ const updateAuth0UI = async() => {
 };
 
 const loginAuth0 = async() => {
-    console.log(`${window.location.origin}/${getRootPath()}/menu.html`);
+    console.log(`${window.location.origin}${getRootPath()}menu.html`);
     await auth0Client.loginWithRedirect({
         authorizationParams: {
             redirect_uri: `${window.location.origin}/${getRootPath()}/menu.html`
