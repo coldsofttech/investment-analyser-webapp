@@ -1,0 +1,20 @@
+<button id="scrollToTop" class="btn btn-custom-blue rounded-circle shadow">↑</button>
+
+<script>
+    document.addEventListener('scrollToTopReady', async function() {
+        const $scroll = $('#scrollToTop');
+
+        $(window).scroll(function() {
+            if ($(this).scrollTop() > 100) {
+                $scroll.fadeIn();
+            } else {
+                $scroll.fadeOut();
+            }
+        });
+
+        $scroll.click(function() {
+            $('html, body').animate({ scrollTop: 0 }, 'slow');
+            return false;
+        });
+    });
+</script>

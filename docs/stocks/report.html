@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Investment Analyser - Stocks</title>
+
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" 
+              integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+        <link rel="stylesheet" href="https://cdn.datatables.net/2.3.1/css/dataTables.dataTables.min.css">
+        <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.4/css/responsive.dataTables.min.css">
+        <link href="../static/css/styles.css" rel="stylesheet">
+    </head>
+    <body>
+        <div id="loading-placeholder"></div>
+        <div id="scrolltotop-placeholder"></div>
+        <div class="container">
+            <div id="userbar-placeholder"></div>
+            <div class="position-relative">
+                <h1 class="title">
+                    <img id="logo" class="logo" />
+                    <span id="companyName"></span>
+                </h1>
+                <div id="riskprofile-placeholder"></div>
+            </div>
+            <div id="error-placeholder"></div>
+            <div id="menu-placeholder"></div>
+            <div id="investment-placeholder"></div>
+            <div id="recommendations-placeholder"></div>
+            <div id="companyinfo-placeholder"></div>
+            <div id="historicalperformance-placeholder"></div>
+            <div id="stockchart-placeholder"></div>
+            <div id="futureperformance-placeholder"></div>
+            <div id="dividends-placeholder"></div>
+        </div>
+        <div id="keyterminology-placeholder"></div>
+
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js" 
+                integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" 
+                crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" 
+                integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" 
+                crossorigin="anonymous"></script>
+        <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+        <script src="https://cdn.datatables.net/2.3.1/js/dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/responsive/3.0.4/js/dataTables.responsive.min.js"></script>
+        <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+        <script src="../static/js/utils.js"></script>
+        <script src="../static/js/auth0.js"></script>
+        <script src="../static/js/currency.js"></script>
+        <script src="../static/js/stocks/exchange.js"></script>
+        <script src="../static/js/stocks/renders.js"></script>
+        <script src="../static/js/stocks/ticker.js"></script>
+
+        <script>
+            $(async function() {
+                $('#loading-placeholder').load('../public/loading.html', async function() {
+                    document.dispatchEvent(new CustomEvent('loadingOverlayReady', { 
+                        message: 'Your awesome "Stock Analysis" report is loading. Hang tight! If it takes too long, just refresh the page...'
+                    }));
+                });
+                $('#error-placeholder').load('../public/error.html', async function() {
+                    document.dispatchEvent(new Event('errorReady'));
+                });
+                $('#userbar-placeholder').load('../public/user-bar.html', async function() {
+                    document.dispatchEvent(new Event('userBarReady'));
+                });
+                $('#menu-placeholder').load('../public/menu.html', async function() {
+                    document.dispatchEvent(new Event('menuReady'));
+                });
+                $('#scrolltotop-placeholder').load('../public/scroll-to-top.html', async function() {
+                    document.dispatchEvent(new Event('scrollToTopReady'));
+                });
+
+                setTimeout(async () => { await initPage() }, 0);
+            });
+
+            async function initPage() {
+                const $loadingOverlay = $('#loading-overlay');
+                $loadingOverlay.show();
+
+                const { urlParams, ticker, stocksOwned, avgPrice } = await parseParams();
+                const errorRedirectionUrl = `
+                    ${getRootPath()}stocks/input.html?${decodeURIComponent(urlParams.toString())}
+                `;
+
+                if (!ticker) {
+                    return displayError('Missing Stock Ticker.', true, errorRedirectionUrl);
+                }
+
+                const defaultCurrency = await parseDefaultCurrency();
+                if (!defaultCurrency) {
+                    return displayError('Unable to retrieve the default currency.', true, errorRedirectionUrl);
+                }
+
+                const tickerObject = new Ticker(ticker, stocksOwned, avgPrice);
+                await tickerObject.init();
+
+                if (tickerObject.error) {
+                    return displayError(tickerObject.error.message, true, errorRedirectionUrl);
+                } else {
+                    await showCompanyInfo(tickerObject.companyInfo, ticker, defaultCurrency);
+                }
+            }
+
+            async function parseParams() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const ticker = urlParams.get('ticker');
+                const stocksOwned = parseFloat(urlParams.get('stocksOwned')) || null;
+                const avgPrice = parseFloat(urlParams.get('avgPrice')) || null;
+
+                return { urlParams, ticker, stocksOwned, avgPrice };
+            }
+
+            async function parseDefaultCurrency() {
+                let defaultCurrency;
+
+                if (!defaultCurrency) {
+                    defaultCurrency = getCurrency(localStorage.getItem('defaultCurrency'));
+                }
+
+                return defaultCurrency;
+            }
+        
+            async function showCompanyInfo(data, ticker, defaultCurrency) {
+                $('#companyName').text(`${data?.companyName} (${ticker})`);
+            }
+        </script>
+    </body>
+</html>

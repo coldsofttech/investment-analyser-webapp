@@ -3,3 +3,13 @@
         <span class="visually-hidden message" id="loadingOverlayMessage">Loading...</span>
     </div>
 </div>
+
+<script>
+    document.addEventListener('loadingOverlayReady', async function(event) {
+        const message = event.message;
+
+        if (message) {
+            $('#loadingOverlayMessage').text(message);
+        }
+    });
+</script>
