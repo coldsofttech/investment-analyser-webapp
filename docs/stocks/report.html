@@ -125,6 +125,11 @@
                         avgPrice,
                         defaultCurrency
                     );
+                    await showFXRateFooter(
+                        defaultCurrency.currency,
+                        [tickerObject.compInfo?.currency],
+                        [tickerObject.fxRate]
+                    );
                 }
             }
 
@@ -170,7 +175,7 @@
             }
         
             async function showInvestmentInfo(priceInfo, fxRate, stocksOwned, avgPrice, defaultCurrency) {
-                $('#investmentinfo-placeholder').load('../public/stocks/investment-info.html', async function() {
+                $('#investment-placeholder').load('../public/stocks/investment-info.html', async function() {
                     document.dispatchEvent(new CustomEvent('investmentInfoReady', {
                         detail: {
                             priceInfo: priceInfo,
@@ -178,6 +183,18 @@
                             stocksOwned: stocksOwned,
                             avgPrice: avgPrice,
                             defaultCurrency: defaultCurrency
+                        }
+                    }));
+                });
+            }
+
+            async function showFXRateFooter(to, fromList, convRates) {
+                $('#keyterminology-placeholder').load('../public/stocks/key-terminology.html', async function() {
+                    document.dispatchEvent(new CustomEvent('keyTerminologyReady', {
+                        detail: {
+                            to: to,
+                            fromList: fromList,
+                            convRates: convRates
                         }
                     }));
                 });
