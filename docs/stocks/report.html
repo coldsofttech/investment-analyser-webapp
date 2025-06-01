@@ -145,7 +145,7 @@
             }
         
             async function showCompanyInfo(compInfo, priceInfo, fxRate, ticker, stocksOwned, avgPrice, defaultCurrency) {
-                $('#logo').attr('src', await renderLogo(await truncWebsite(data?.website)));
+                $('#logo').attr('src', await renderLogo(await truncWebsite(compInfo?.website)));
                 $('#companyName').text(`${compInfo?.companyName} (${ticker})`);
 
                 $('#companyinfo-placeholder').load('../public/stocks/company-info.html', async function() {
