@@ -103,7 +103,15 @@
                 if (tickerObject.error) {
                     return displayError(tickerObject.error.message, true, errorRedirectionUrl);
                 } else {
-                    await showCompanyInfo(tickerObject.companyInfo, ticker, stocksOwned, avgPrice, defaultCurrency);
+                    await showCompanyInfo(
+                        tickerObject.companyInfo, 
+                        tickerObject.priceInfo,
+                        tickerObject.fxRate,
+                        ticker,
+                        stocksOwned, 
+                        avgPrice, 
+                        defaultCurrency
+                    );
                 }
             }
 
@@ -126,18 +134,18 @@
                 return defaultCurrency;
             }
         
-            async function showCompanyInfo(data, ticker, stocksOwned, avgPrice, defaultCurrency) {
+            async function showCompanyInfo(compInfo, priceInfo, fxRate, ticker, stocksOwned, avgPrice, defaultCurrency) {
                 $('#logo').attr('src', await renderLogo(await truncWebsite(data?.website)));
-                $('#companyName').text(`${data?.companyName} (${ticker})`);
+                $('#companyName').text(`${compInfo?.companyName} (${ticker})`);
 
                 $('#companyinfo-placeholder').load('../public/stocks/company-info.html', async function() {
                     document.dispatchEvent(new CustomEvent('companyInfoReady', {
                         detail: {
-                            info: data,
+                            info: compInfo,
                             stocksOwned: stocksOwned,
                             avgPrice: avgPrice,
-                            fxRate: '',
-                            currentPrice: '',
+                            fxRate: fxRate,
+                            priceInfo: priceInfo,
                             defaultCurrency: defaultCurrency
                         }
                     }));
