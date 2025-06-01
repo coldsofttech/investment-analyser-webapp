@@ -1,0 +1,80 @@
+<h2 class="title">Company Information</h2>
+<div class="row">
+    <div class="col-md-6">
+        <ul class="details-list">
+            <li class="d-flex justify-content-between">
+                <strong>Exchange:</strong> <span id="exchange" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Industry:</strong> <span id="industry" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Sector:</strong> <span id="sector" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Website:</strong> <a target="_blank" id="website" class="text-right"></a>
+            </li>
+            <li id="stocksOwnedContainer" class="d-flex justify-content-between">
+                <strong>Stocks Owned:</strong> <span id="stocksOwned" class="text-right"></span>
+            </li>
+            <li id="avgPriceContainer" class="d-flex justify-content-between">
+                <strong>Avg. Price:</strong> <span id="avgPrice" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Current Price:</strong> <span id="currentPrice" class="text-right"></span>
+            </li>
+        </ul>
+    </div>
+    <div class="col-md-6">
+        <ul class="details-list">
+            <li class="d-flex justify-content-between">
+                <strong>Type:</strong> <span id="type" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Market Cap:</strong> <span id="marketCap" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Dividend Yield:</strong> <span id="dividendYield" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Dividend Payout Ratio:</strong> <span id="dividendPayoutRatio" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Dividend Frequency:</strong> <span id="dividendFrequency" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Volatility:</strong> <span id="volatility" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Beta:</strong> <span id="beta" class="text-right"></span>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('companyInfoReady', async function(event) {
+        const info = event.info;
+        const fxRate = event.fxRate;
+        const stocksOwned = event.stocksOwned;
+        const avgPrice = event.avgPrice;
+        const currentPrice = event.currentPrice;
+
+        if (info) {
+            const setText = (id, text) => $(`#${id}`).text(text);
+            const setAttr = (id, attr, value) => $(`#${id}`).attr(attr, value);
+            const formatOrNA = (val, formatFn) => val !== null && val !== undefined ? formatFn(val) : 'N/A';
+            const setVisible = ($selector, isVisible, showClass = 'd-flex', hideClass = 'd-none') => {
+                $selector.toggleClass(hideClass, !isVisible).toggleClass(showClass, isVisible);
+            }
+
+            setText('exchange', info?.exchange);
+            setText('industry', info?.industry);
+            setText('sector', info?.sector);
+            setText('website', await truncWebsite(info?.website));
+            setAttr('website', 'href', info?.website);
+            setAttr('website', 'aria-label', `Visit ${info?.companyName} website.`);
+            setText('type', info?.type);
+        }
+    });
+</script>

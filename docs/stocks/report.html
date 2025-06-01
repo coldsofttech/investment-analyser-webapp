@@ -125,7 +125,14 @@
             }
         
             async function showCompanyInfo(data, ticker, defaultCurrency) {
+                $('#logo').attr('src', await renderLogo(await truncWebsite(data?.website)));
                 $('#companyName').text(`${data?.companyName} (${ticker})`);
+
+                $('#companyinfo-placeholder').load('../public/stocks/company-info.html', async function() {
+                    document.dispatchEvent(new CustomEvent('companyInfoReady', {
+                        info: data
+                    }));
+                });
             }
         </script>
     </body>
