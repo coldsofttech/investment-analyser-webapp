@@ -53,17 +53,8 @@ class Ticker {
     async _getCompanyInformation() {
         try {
             const url = `${this.api?.config?.domain}/tickers/${this.tickerCode}?fields=info`;
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: this.api?.headers
-            });
-
-            if (!response.ok) {
-                throw new Error(`API error (${response.status}): ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            return data.info;
+            
+            return await fetchWithCache(url, this.api?.headers);
         } catch (err) {
             throw new Error(`Company info fetch failed: ${err.message}`);
         }
