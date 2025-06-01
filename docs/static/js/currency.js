@@ -30,12 +30,14 @@ async function getDefaultCurrency(
     customSymbol = null,
     {
         currencySelector = '#defaultCurrency',
+        currencySymbolSelector = '#defaultCurrencySymbol',
         currencyModal = '#defaultCurrencyModal',
         currencySaveButton = '#saveDefaultCurrency',
         currenciesList = '#defaultCurrencyList'
     } = {}
 ){
     const $selector = $(currencySelector);
+    const $symbolSelector = $(currencySymbolSelector);
     const $modal = $(currencyModal);
     const $saveBtn = $(currencySaveButton);
     const $currencyList = $(currenciesList);
@@ -46,7 +48,7 @@ async function getDefaultCurrency(
             : defaultCurrency();
     };
     const updateUI = (currency) => {
-        _addCurrencyIcon($selector, currency.icon);
+        _addCurrencyIcon($symbolSelector, currency.icon);
         if (customCurrency) $(customCurrency).text(currency.currency);
         if (customSymbol) _addCurrencyIcon($(customSymbol), currency.icon);
     };
