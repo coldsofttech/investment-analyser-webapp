@@ -9,6 +9,7 @@ class Ticker {
         this.companyInfo = null;
         this.priceInfo = null;
         this.fxRate = null;
+        this.lineChartData = null;
     }
 
     async init() {
@@ -22,6 +23,7 @@ class Ticker {
             this.companyInfo = await this._getCompanyInformation();
             this.priceInfo = await this._getPriceInformation();
             this.fxRate = await this._getFXRate();
+            this.lineChartData = await this._getLineChartData();
             this.error = null;
         } catch(err) {
             this.error = {
@@ -85,6 +87,17 @@ class Ticker {
             return data.conversionRate;
         } catch (err) {
             throw new Error(`FX Rate fetch failed: ${err.message}`);
+        }
+    }
+
+    async _getLineChartData() {
+        try {
+            const url = `${this.api?.config?.domain}/tickers/${this.tickerCode}?fields=data`;
+            const data = await fetchWithCache(url, this.api?.headers);
+
+            return data.data;
+        } catch (err) {
+            throw new Error(`Line chart info fetch failed: ${err.message}`);
         }
     }
 }
