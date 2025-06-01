@@ -11,7 +11,7 @@ class Ticker {
         this.fxRate = null;
         this.dividends = null;
         this.events = null;
-        this.lineChartData = null;
+        this.stockData = null;
     }
 
     async init() {
@@ -27,7 +27,7 @@ class Ticker {
             this.fxRate = await this._getFXRate();
             this.dividends = await this._getDividends();
             this.events = await this._getEvents();
-            this.lineChartData = await this._getLineChartData();
+            this.stockData = await this._getLineChartData();
             this.error = null;
         } catch(err) {
             this.error = {
