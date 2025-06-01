@@ -246,7 +246,7 @@
             }
 
             async function showHistoricalPerformance(data) {
-                $('#companyinfo-placeholder').load('../public/stocks/history-info.html', async function() {
+                $('#historicalperformance-placeholder').load('../public/stocks/history-info.html', async function() {
                     document.dispatchEvent(new CustomEvent('historicalPerformanceReady', {
                         detail: {
                             data: data
