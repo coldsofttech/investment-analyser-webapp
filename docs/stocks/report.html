@@ -54,7 +54,7 @@
             <div id="historicalperformance-placeholder"></div>
             <div id="stockchart-placeholder"></div>
             <div id="futureperformance-placeholder"></div>
-            <div id="dividends-placeholder"></div>
+            <div id="dividends-placeholder" class="pt-2"></div>
         </div>
         <div id="keyterminology-placeholder"></div>
 
@@ -75,6 +75,7 @@
         <script src="../static/js/stocks/exchange.js"></script>
         <script src="../static/js/stocks/renders.js"></script>
         <script src="../static/js/stocks/ticker.js"></script>
+        <script src="../static/js/stocks/analyser.js"></script>
 
         <script>
             $(async function() {
@@ -120,10 +121,18 @@
                 }
 
                 let tickerObject = null;
+                let analyserObject = null;
 
                 try {
                     tickerObject = new Ticker(ticker, defaultCurrency, stocksOwned, avgPrice);
                     await tickerObject.init();
+
+                    analyserObject = new StockAnalyser(
+                        tickerObject.companyInfo,
+                        tickerObject.stockData,
+                        tickerObject.dividends,
+                        tickerObject.fxRate
+                    );
                 } catch (err) {
                     return displayError(err.message, true, errorRedirectionUrl);
                 }
@@ -159,8 +168,9 @@
                         stocksOwned,
                         defaultCurrency
                     );
+                    await showHistoricalPerformance(analyserObject.historicalPerformance);
                     await showLineChart(
-                        tickerObject.lineChartData,
+                        tickerObject.stockData,
                         tickerObject.fxRate,
                         avgPrice,
                         defaultCurrency
@@ -230,6 +240,16 @@
                             to: to,
                             fromList: fromList,
                             convRates: convRates
+                        }
+                    }));
+                });
+            }
+
+            async function showHistoricalPerformance(data) {
+                $('#companyinfo-placeholder').load('../public/stocks/history-info.html', async function() {
+                    document.dispatchEvent(new CustomEvent('historicalPerformanceReady', {
+                        detail: {
+                            data: data
                         }
                     }));
                 });

@@ -1,0 +1,65 @@
+<h2 class="title">
+    <i class="bi bi-search me-md-0 me-0"></i>
+    Historical Performance
+</h2>
+<div class="row">
+    <div id="historyTableDesktopView">
+        <table id="historyTable" class="display dataTable">
+            <thead>
+                <tr>
+                    <th style="display: none;">Index</th>
+                    <th>Period</th>
+                    <th class="text-right">Growth %</th>
+                    <th class="text-right">CAGR %</th>
+                    <th class="text-right">Dividend CAGR %</th>
+                    <th class="text-right">Total Returns CAGR %</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div id="historyTableMobileView" class="accordion"></div>
+</div>
+
+<script>
+    document.addEventListener('historicalPerformanceReady', async function(event) {
+        const data = event.detail?.data;
+
+        const processedData = await Promise.all(data.map(async (row) => {
+            const format = async (val) => val === null ? 'N/A' : await formatPercentage(val);
+            const colorClass = (val) => isNaN(val) || val === null ? 'color-na' : val >= 0 ? 'color-pos' : 'color-neg';
+
+            return {
+                ...row,
+                growthFormatted: `<span class="${colorClass(row.growth)}">${await format(row.growth)}</span>`,
+                cagrFormatted: `<span class="${colorClass(row.cagr)}">${await format(row.cagr)}</span>`,
+                dividendCagrFormatted: `<span class="${colorClass(row.dividendCagr)}">${await format(row.dividendCagr)}</span>`,
+                totalReturnsCagrFormatted: `<span class="${colorClass(row.totalReturnsCagr)}">${await format(row.totalReturnsCagr)}</span>`,
+            };
+        }));
+
+        const columns = [
+            { data: 'index', title: 'Index' },
+            { data: 'period', title: 'Period' },
+            { data: 'growthFormatted', title: 'Growth %' },
+            { data: 'cagrFormatted', title: 'CAGR %' },
+            { data: 'dividendCagrFormatted', title: 'Dividend CAGR %' },
+            { data: 'totalReturnsCagrFormatted', title: 'Total Returns CAGR %' }
+        ];
+
+        await renderDataTable({
+            selector: $('#historyTable'),
+            data: processedData,
+            columns: columns,
+            rightAlignColumns: [2, 3, 4, 5],
+            hiddenColumns: [0]
+        });
+
+        await renderDataTableMobileView({
+            elementId: '#historyTableMobileView',
+            data: processedData,
+            columns: columns,
+            titleFields: ['period', 'totalReturnsCagrFormatted'],
+            hiddenFields: ['index']
+        });
+    });
+</script>
