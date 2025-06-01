@@ -54,11 +54,15 @@
 
 <script>
     document.addEventListener('companyInfoReady', async function(event) {
+        const $stocksOwnedContainer = $('#stocksOwnedContainer');
+        const $avgPriceContainer = $('#avgPriceContainer');
+
         const info = event.detail?.info;
         const fxRate = event.detail?.fxRate;
         const stocksOwned = event.detail?.stocksOwned;
         const avgPrice = event.detail?.avgPrice;
         const currentPrice = event.detail?.currentPrice;
+        const defaultCurrency = event.detail?.defaultCurrency;
 
         if (info) {
             const setText = (id, text) => $(`#${id}`).text(text);
@@ -75,6 +79,16 @@
             setAttr('website', 'href', info?.website);
             setAttr('website', 'aria-label', `Visit ${info?.companyName} website.`);
             setText('type', info?.type);
+
+            if (stocksOwned > 0) {
+                setVisible($stocksOwnedContainer, true);
+                setVisible($avgPriceContainer, true);
+                setText('stocksOwned', stocksOwned);
+                setText('avgPrice', await formatCurrency(avgPrice, defaultCurrency, true));
+            } else {
+                setVisible($stocksOwnedContainer, false);
+                setVisible($avgPriceContainer, false);
+            }
         }
     });
 </script>
