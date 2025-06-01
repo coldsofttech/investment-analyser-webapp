@@ -11,6 +11,28 @@
         <link rel="stylesheet" href="https://cdn.datatables.net/2.3.1/css/dataTables.dataTables.min.css">
         <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.4/css/responsive.dataTables.min.css">
         <link href="../static/css/styles.css" rel="stylesheet">
+
+        <style>
+            #historyTableMobileView,
+            #forecastTableMobileView,
+            #dividendsTableMobileView {
+                display: none;
+            }
+
+            @media (max-width: 768px) {
+                #historyTableDesktopView,
+                #forecastTableDesktopView,
+                #dividendsTableDesktopView {
+                    display: none;
+                }
+
+                #historyTableMobileView,
+                #forecastTableMobileView,
+                #dividendsTableMobileView {
+                    display: block;
+                }
+            }
+        </style>
     </head>
     <body>
         <div id="loading-placeholder"></div>
@@ -130,6 +152,13 @@
                         [tickerObject.companyInfo?.currency],
                         [tickerObject.fxRate]
                     );
+                    await showDividends(
+                        tickerObject.dividends,
+                        tickerObject.events,
+                        tickerObject.fxRate,
+                        stocksOwned,
+                        defaultCurrency
+                    );
                     await showLineChart(
                         tickerObject.lineChartData,
                         tickerObject.fxRate,
@@ -201,6 +230,20 @@
                             to: to,
                             fromList: fromList,
                             convRates: convRates
+                        }
+                    }));
+                });
+            }
+
+            async function showDividends(dividendsData, events, fxRate, stocksOwned, defaultCurrency) {
+                $('#dividends-placeholder').load('../public/stocks/dividends-info.html', async function() {
+                    document.dispatchEvent(new CustomEvent('dividendsReady', {
+                        detail: {
+                            data: dividendsData,
+                            events: events,
+                            fxRate: fxRate,
+                            stocksOwned: stocksOwned,
+                            defaultCurrency: defaultCurrency
                         }
                     }));
                 });

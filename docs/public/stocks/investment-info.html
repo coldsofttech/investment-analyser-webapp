@@ -26,19 +26,19 @@
             const netContent = `
                 <div class="text-right">
                     ${await formatCurrency(netValue, defaultCurrency)}<br>
-                    <i class="optional-text">(${stocksOwned} * ${await formatCurrency(avgPrice, defaultCurrency)})</i>
+                    <i class="optional-text d-none d-md-inline">(${stocksOwned} * ${await formatCurrency(avgPrice, defaultCurrency)})</i>
                 </div>
             `;
             const currentContent = `
                 <div class="text-right">
                     ${await formatCurrency(currentValue, defaultCurrency)}<br>
-                    <i class="optional-text">(${stocksOwned} * ${await formatCurrency((priceInfo?.currentPrice * fxRate), defaultCurrency)})</i>
+                    <i class="optional-text d-none d-md-inline">(${stocksOwned} * ${await formatCurrency((priceInfo?.currentPrice * fxRate), defaultCurrency)})</i>
                 </div>
             `;
             const growthContent = `
                 <div class="text-right">
                     ${await formatPercentage(growth)}<br>
-                    <i class="optional-text">(${growth > 0 ? "Profit" : "Loss"}: ${await formatCurrency(currentValue - netValue, defaultCurrency)})</i>
+                    <i class="optional-text d-none d-md-inline">(${growth > 0 ? "Profit" : "Loss"}: ${await formatCurrency(currentValue - netValue, defaultCurrency)})</i>
                 </div>
             `;
 

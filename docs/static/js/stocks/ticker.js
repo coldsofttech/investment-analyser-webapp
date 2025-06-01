@@ -9,6 +9,8 @@ class Ticker {
         this.companyInfo = null;
         this.priceInfo = null;
         this.fxRate = null;
+        this.dividends = null;
+        this.events = null;
         this.lineChartData = null;
     }
 
@@ -23,6 +25,8 @@ class Ticker {
             this.companyInfo = await this._getCompanyInformation();
             this.priceInfo = await this._getPriceInformation();
             this.fxRate = await this._getFXRate();
+            this.dividends = await this._getDividends();
+            this.events = await this._getEvents();
             this.lineChartData = await this._getLineChartData();
             this.error = null;
         } catch(err) {
@@ -76,6 +80,28 @@ class Ticker {
             return data.priceInfo;
         } catch (err) {
             throw new Error(`Price info fetch failed: ${err.message}`);
+        }
+    }
+
+    async _getDividends() {
+        try {
+            const url = `${this.api?.config?.domain}/tickers/${this.tickerCode}?fields=dividends`;
+            const data = await fetchWithCache(url, this.api?.headers);
+
+            return data.dividends;
+        } catch (err) {
+            throw new Error(`Dividends fetch failed: ${err.message}`);
+        }
+    }
+
+    async _getEvents() {
+        try {
+            const url = `${this.api?.config?.domain}/tickers/${this.tickerCode}?fields=events`;
+            const data = await fetchWithCache(url, this.api?.headers);
+
+            return data.events;
+        } catch (err) {
+            throw new Error(`Events fetch failed: ${err.message}`);
         }
     }
 
