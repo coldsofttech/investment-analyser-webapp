@@ -57,8 +57,10 @@
         <script>
             $(async function() {
                 $('#loading-placeholder').load('../public/loading.html', async function() {
-                    document.dispatchEvent(new CustomEvent('loadingOverlayReady', { 
-                        message: 'Your awesome "Stock Analysis" report is loading. Hang tight! If it takes too long, just refresh the page...'
+                    document.dispatchEvent(new CustomEvent('loadingOverlayReady', {
+                        detail: {
+                            message: 'Your awesome "Stock Analysis" report is loading. Hang tight! If it takes too long, just refresh the page...'
+                        }
                     }));
                 });
                 $('#error-placeholder').load('../public/error.html', async function() {
