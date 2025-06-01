@@ -97,8 +97,10 @@
                     return displayError('Unable to retrieve the default currency.', true, errorRedirectionUrl);
                 }
 
+                let tickerObject = null;
+
                 try {
-                    const tickerObject = new Ticker(ticker, defaultCurrency, stocksOwned, avgPrice);
+                    tickerObject = new Ticker(ticker, defaultCurrency, stocksOwned, avgPrice);
                     await tickerObject.init();
                 } catch (err) {
                     return displayError(err.message, true, errorRedirectionUrl);
