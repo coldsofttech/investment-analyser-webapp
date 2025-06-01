@@ -130,6 +130,12 @@
                         [tickerObject.companyInfo?.currency],
                         [tickerObject.fxRate]
                     );
+                    await showLineChart(
+                        tickerObject.lineChartData,
+                        tickerObject.fxRate,
+                        avgPrice,
+                        defaultCurrency
+                    );
                 }
             }
 
@@ -195,6 +201,35 @@
                             to: to,
                             fromList: fromList,
                             convRates: convRates
+                        }
+                    }));
+                });
+            }
+        
+            async function showLineChart(stockData, fxRate, avgPrice, defaultCurrency) {
+                const dates = stockData.map(i => i.date);
+                const prices = stockData.map(i => i.price * fxRate);
+                const chartData = {
+                    series: [{
+                        dates: dates,
+                        values: prices,
+                        label: `Price (in ${defaultCurrency.currency})`,
+                        fxRate: fxRate,
+                        color: '#3498DB'
+                    }]
+                };
+
+                if (avgPrice > 0) {
+                    chartData.avgLine = { value: parseFloat(avgPrice) };
+                }
+
+                $('#stockchart-placeholder').load('../public/stocks/stock-chart.html', async function() {
+                    document.dispatchEvent(new CustomEvent('lineChartReady', {
+                        detail: {
+                            data: chartData,
+                            title: 'Historical Data',
+                            currency: defaultCurrency.currency,
+                            showLegend: false
                         }
                     }));
                 });
