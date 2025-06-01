@@ -68,7 +68,6 @@
             const isAuthenticated = await isAuth0Authenticated();
             if (isAuthenticated) {
                 const user = await getAuth0UserInfo();
-                console.log(user);
                 $userContainer.text(user.name);
                 $dropdownContainer.removeClass('d-none');
                 $loginContainer.addClass('d-none');
