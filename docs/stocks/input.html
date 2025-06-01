@@ -9,6 +9,24 @@
               integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
         <link href="../static/css/styles.css" rel="stylesheet">
+        <style>
+            .w-reset-responsive {
+                width: 100px;
+            }
+
+            .w-submit-responsive {
+                width: 120px;
+            }
+
+            @media (max-width: 768px) {
+                .w-reset-responsive,
+                .w-submit-responsive {
+                    width: 50px !important;
+                    padding-left: 0.5rem;
+                    padding-right: 0.5rem;
+                }
+            }
+        </style>
     </head>
     <body>
         <div class="container">
@@ -19,21 +37,28 @@
             <div id="error-placeholder"></div>
             <div id="menu-placeholder"></div>
             
-            <form id="form" method="post">
-                <div id="tickerinputform-placeholder"></div>
+            <div class="form">
                 <div class="row padding">
-                    <div class="col-md-12 text-right">
-                        <button type="reset" id="reset" class="btn btn-custom-blue" style="width: 100px;">
-                            <i class="bi bi-arrow-clockwise me-2"></i>
-                            <span class="d-none d-sm-inline">Reset</span>
-                        </button>
-                        <button type="submit" id="submit" class="btn btn-custom-blue" style="width: 100px;">
-                            <i class="bi bi-clipboard2-data me-2"></i>
-                            <span class="d-none d-sm-inline">Analyse</span>
-                        </button>
+                    <div class="col-md-12">
+                        <strong>Enter Stock details to analyse:</strong>
                     </div>
                 </div>
-            </form>
+                <form id="form" method="post">
+                    <div id="tickerinputform-placeholder"></div>
+                    <div class="row padding">
+                        <div class="col-md-12 text-right">
+                            <button type="reset" id="reset" class="btn btn-custom-blue w-reset-responsive" title="Reset">
+                                <i class="bi bi-arrow-clockwise me-md-2 me-0"></i>
+                                <span class="d-none d-md-inline">Reset</span>
+                            </button>
+                            <button type="submit" id="submit" class="btn btn-custom-blue w-submit-responsive" title="Analyse">
+                                <i class="bi bi-clipboard2-data me-md-2 me-0"></i>
+                                <span class="d-none d-md-inline">Analyse</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <script src="https://code.jquery.com/jquery-3.7.1.min.js" 
