@@ -1,0 +1,53 @@
+<div class="row custom-breadcrumb padding" id="investmentContainer">
+    <div class="col-md-4 investment-row">
+        <strong>Net Deposit:</strong> <span id="investmentNet" class="fw-bold"></span>
+    </div>
+    <div class="col-md-4 investment-row">
+        <strong>Current Value:</strong> <span id="investmentCurrent" class="fw-bold"></span>
+    </div>
+    <div class="col-md-4 investment-row">
+        <strong>Rate of Return %:</strong> <span id="investmentGrowth" class="fw-bold"></span>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('investmentInfoReady', async function(event) {
+        const stocksOwned = event.detail?.stocksOwned;
+        const avgPrice = event.detail?.avgPrice;
+        const priceInfo = event.detail?.priceInfo;
+        const fxRate = event.detail?.fxRate;
+        const defaultCurrency = event.detail?.defaultCurrency;
+        const $investmentContainer = $('#investmentContainer');
+
+        if (stocksOwned > 0) {
+            const netValue = stocksOwned * avgPrice;
+            const currentValue = stocksOwned * (priceInfo?.currentPrice * fxRate);
+            const growth = ((currentValue - netValue) / netValue) * 100;
+            const netContent = `
+                <div class="text-right">
+                    ${await formatCurrency(netValue, defaultCurrency)}<br>
+                    <i class="optional-text">(${stocksOwned} * ${await formatCurrency(avgPrice, defaultCurrency)})</i>
+                </div>
+            `;
+            const currentContent = `
+                <div class="text-right">
+                    ${await formatCurrency(currentValue, defaultCurrency)}<br>
+                    <i class="optional-text">(${stocksOwned} * ${await formatCurrency((currentPrice * fxRate), defaultCurrency)})</i>
+                </div>
+            `;
+            const growthContent = `
+                <div class="text-right">
+                    ${await formatPercentage(growth)}<br>
+                    <i class="optional-text">(${growth > 0 ? "Profit" : "Loss"}: ${await formatCurrency(currentValue - netValue, defaultCurrency)})</i>
+                </div>
+            `;
+
+            $('#investmentNet').html(netContent).attr('class', 'color-na');
+            $('#investmentCurrent').html(currentContent).attr('class', currentValue > netValue ? 'color-pos' : 'color-neg');
+            $('#investmentGrowth').html(growthContent).attr('class', growth > 0 ? 'color-pos' : 'color-neg');
+            $investmentContainer.show();
+        } else {
+            $investmentContainer.hide();
+        }
+    });
+</script>
