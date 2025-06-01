@@ -12,12 +12,12 @@
                        aria-expanded="false">Stocks Analyser</a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <li>
-                            <a class="dropdown-item" href="/investment-analyser/stocks/input.html">
+                            <a id="nav-stocks-input" class="dropdown-item">
                                 <i class="bi bi-graph-up"></i><span class="padding">Stocks</span>
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="/investment-analyser/stocks/pie">
+                            <a class="dropdown-item" href="#">
                                 <i class="bi bi-pie-chart"></i><span class="padding">Pie <i>(Portfolios)</i></span>
                             </a>
                         </li>
@@ -38,7 +38,8 @@
     document.addEventListener('menuReady', async function() {
         const appRootPath = getRootPath();
         const links = {
-            'nav-menu': 'menu.html'
+            'nav-menu': 'menu.html',
+            'nav-stocks-input': 'stocks/input.html'
         };
 
         for (const [id, path] of Object.entries(links)) {
