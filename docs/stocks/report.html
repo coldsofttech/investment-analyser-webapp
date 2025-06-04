@@ -51,10 +51,10 @@
             <div id="investment-placeholder"></div>
             <div id="recommendations-placeholder"></div>
             <div id="companyinfo-placeholder"></div>
-            <div id="historicalperformance-placeholder" class="pt-md-2"></div>
-            <div id="stockchart-placeholder"></div>
-            <div id="futureperformance-placeholder" class="pt-md-2"></div>
-            <div id="dividends-placeholder" class="pt-md-2"></div>
+            <div id="historicalperformance-placeholder" class="pt-sm-2"></div>
+            <div id="stockchart-placeholder" class="pt-sm-2"></div>
+            <div id="futureperformance-placeholder" class="pt-sm-2"></div>
+            <div id="dividends-placeholder" class="pt-sm-2"></div>
         </div>
         <div id="keyterminology-placeholder"></div>
 
@@ -177,6 +177,7 @@
                         defaultCurrency
                     );
                     await showRecommendations(analyserObject.recommendations);
+                    await showRiskProfile(analyserObject.riskProfile);
                     await showLineChart(
                         tickerObject.stockData,
                         tickerObject.fxRate,
@@ -295,6 +296,16 @@
                         detail: {
                             shortTerm: data?.shortTerm,
                             longTerm: data?.longTerm
+                        }
+                    }));
+                });
+            }
+
+            async function showRiskProfile(data) {
+                $('#riskprofile-placeholder').load('../public/stocks/risk-profile.html', async function() {
+                    document.dispatchEvent(new CustomEvent('riskProfileReady', {
+                        detail: {
+                            data: data
                         }
                     }));
                 });

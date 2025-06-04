@@ -1,0 +1,26 @@
+<div class="risk-profile-container" id="riskProfileContainer">
+    <div class="risk-bar">
+        <div class="risk-level" id="riskLevel">
+            <strong>Risk:</strong> <span id="riskProfile" class="tooltip-target"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('riskProfileReady', async function(event) {
+        const data = event.detail?.data;
+
+        const tooltipContent = `
+            <span class="custom-tooltip ${data?.overallRisk}">
+                <strong>Beta</strong>: ${data?.riskProfile.beta.risk}<br>
+                <strong>Market Cap</strong>: ${data?.riskProfile.marketCap.risk}<br>
+                <strong>Max Drawdown</strong>: ${data?.riskProfile.maxDrawdown.risk}<br>
+                <strong>Sharpe Ratio</strong>: ${data?.riskProfile.sharpeRatio.risk}<br>
+                <strong>Volatility</strong>: ${data?.riskProfile.volatility.risk}
+            </span>
+        `;
+
+        $('#riskProfile').html(`${data?.overallRisk}${tooltipContent}`);
+        $('#riksLevel').attr('class', `riskLevel ${data?.overallRisk}`);
+    });
+</script>

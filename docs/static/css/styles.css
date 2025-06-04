@@ -387,12 +387,43 @@ table.dataTable tbody tr:hover {
     color: white !important;
 }
 
-#riskProfileContainer {
+/* #riskProfileContainer {
     position: absolute; 
     right: 0; 
     top: 50%; 
     transform: translateY(-50%);
+} */
+
+.risk-profile-container {
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    padding: 1rem;
+    background: #f4f4f4;
+    position: relative;
 }
+
+.risk-bar {
+    display: flex;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    max-width: 600px;
+    width: 100%;
+}
+
+.risk-level {
+    flex: 1;
+    text-align: center;
+    padding: 1rem;
+    color: white;
+    font-weight: bold;
+}
+
+.low { background-color: green; }
+.medium { background-color: orange; }
+.high { background-color: red; }
+.very-high { background-color: red; }
 
 .color-pos { color: green; font-weight: bold; }
 .color-hold { color: orange; font-weight: bold; }
@@ -536,10 +567,32 @@ input:checked + .slider:before {
         padding-bottom: 20px; 
     }
 
-    #riskProfileContainer {
+    /* #riskProfileContainer {
         position: static;
         transform: none;
         margin-top: 10px;
+    } */
+
+    .risk-profile-container {
+        position: fixed;
+        bottom: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        z-index: 999;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        border-radius: 12px;
+    }
+
+    .risk-bar {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .risk-level {
+        padding: 0.75rem;
+        font-size: 0.9rem;
     }
 
     .custom-tooltip {
