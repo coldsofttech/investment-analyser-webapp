@@ -131,7 +131,9 @@
                         tickerObject.companyInfo,
                         tickerObject.stockData,
                         tickerObject.dividends,
-                        tickerObject.fxRate
+                        tickerObject.fxRate,
+                        stocksOwned,
+                        avgPrice
                     );
                 } catch (err) {
                     return displayError(err.message, true, errorRedirectionUrl);
@@ -169,6 +171,10 @@
                         defaultCurrency
                     );
                     await showHistoricalPerformance(analyserObject.historicalPerformance);
+                    await showFutureForecast(
+                        analyserObject.futureForecast,
+                        defaultCurrency
+                    );
                     await showLineChart(
                         tickerObject.stockData,
                         tickerObject.fxRate,
@@ -250,6 +256,17 @@
                     document.dispatchEvent(new CustomEvent('historicalPerformanceReady', {
                         detail: {
                             data: data
+                        }
+                    }));
+                });
+            }
+
+            async function showFutureForecast(data, defaultCurrency) {
+                $('#futureperformance-placeholder').load('../public/stocks/future-info.html', async function() {
+                    document.dispatchEvent(new CustomEvent('futureForecastReady', {
+                        detail: {
+                            data: data,
+                            defaultCurrency: defaultCurrency
                         }
                     }));
                 });

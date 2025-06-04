@@ -48,13 +48,15 @@ function classifyRisk (value, thresholds) {
 }
 
 class StockAnalyser {
-    constructor(info, data, dividends, fxRate) {
+    constructor(info, data, dividends, fxRate, stocksOwned, avgPrice) {
         this.info = info;
         this.data = data;
         this.dividends = dividends;
         this.fxRate = fxRate;
+        this.stocksOwned = stocksOwned;
+        this.avgPrice = avgPrice;
         this.historicalPerformance = this.getHistoricalPerformance();
-        this.futureForecast = null;
+        this.futureForecast = this.getFutureForecast();
         this.recommendations = null;
         this.riskProfile = null;
     }
@@ -156,6 +158,151 @@ class StockAnalyser {
                 dividendCagr: divCagr,
                 totalReturnsCagr: trCagr
             });
+        }
+
+        return records;
+    }
+
+    getFutureForecast() {
+        let records = [];
+
+        for (const period of periods) {
+            let forecastPrice = null, growth = null, cagr = null, divCagr = null, trCagr = null, prGrowth = null, trGrowth = null;
+
+            if (period.months !== null) {
+                const endDate = new Date(this.data?.at(-1).date);
+                const endPrice = this.data?.at(-1).price * this.fxRate;
+
+                let startDate = new Date(endDate);
+                startDate.setMonth(startDate.getMonth() - period.months);
+
+                if (period.months < 12) {
+                    let sum = 0, count = 0;
+
+                    for (let i = 0; i < this.data?.length; i++) {
+                        const currentDate = new Date(this.data?.at(i).date);
+
+                        if (currentDate >= startDate && currentDate <= endDate) {
+                            sum += (this.data?.at(i).price * this.fxRate);
+                            count++;
+                        }
+                    }
+
+                    if (count > 0) {
+                        forecastPrice = parseFloat(sum / count);
+                        growth = parseFloat(((forecastPrice - endPrice) / endPrice) * 100);
+                        const cagrExp = (period.months !== null ? period.months : noOfMonths) / 12;
+                        cagr = parseFloat((Math.pow((forecastPrice / endPrice), (1 / cagrExp)) - 1) * 100);
+                    }
+
+                    const divsInRange = this.dividends
+                        .map((item, idx) => ({ date: new Date(item.date), price: item.price * this.fxRate }))
+                        .filter(item => item.date >= startDate && item.date <= endDate && item.price > 0);
+                    
+                    if (divsInRange.length > 0) {
+                        const avgDiv = divsInRange.reduce((sum, d) => sum + d.price, 0) / divsInRange.length;
+                        const lastDiv = this.dividends?.at(-1).price * this.fxRate;
+
+                        if (avgDiv > 0 && lastDiv > 0) {
+                            divCagr = parseFloat(((lastDiv / avgDiv) - 1) * 100);
+                        } else {
+                            divCagr = null;
+                        }
+                    }
+
+                    let trStartPrice = endPrice;
+                    let trEndPrice = forecastPrice;
+                    let trDivSum = 0;
+                    const trCagrExp = (period.months !== null ? period.months : noOfMonths) / 12;
+                    const totalDivsInRange = this.dividends
+                        .map((item, idx) => ({ date: new Date(item.date), price: item.price * this.fxRate }))
+                        .filter(item => item.date >= startDate && item.date <= endDate && item.price > 0);
+                    
+                    if (totalDivsInRange.length > 0) {
+                        trDivSum = totalDivsInRange.reduce((sum, d) => sum + d.price, 0);
+                    }
+
+                    if (trStartPrice > 0) {
+                        trCagr = parseFloat((Math.pow(((trEndPrice + trDivSum) / trStartPrice), (1 / trCagrExp)) - 1) * 100);
+                    } else {
+                        trCagr = null;
+                    }
+                } else {
+                    let lastPrice = null;
+
+                    const filteredDates = this.data
+                        .map((item, idx) => ({ date: new Date(item.date), price: item.price * this.fxRate }))
+                        .filter(item => item.date >= startDate && item.date <= endDate);
+                    
+                    if (filteredDates < 2) {
+                        growth = null;
+                        forecastPrice = null;
+                    } else {
+                        const baseDate = filteredDates[0].date;
+                        const x = filteredDates.map(item => (item.date - baseDate) / (1000 * 60 * 60 * 24));
+                        const y = filteredDates.map(item => item.price);
+                        const { a, b } = this.#trendlineLinearRegression(x, y);
+                        const daysToForecast = period.months * 30.44;
+                        const futureX = x[x.length - 1] + daysToForecast;
+                        forecastPrice = parseFloat(a + b * futureX);
+                        lastPrice = y[y.length - 1];
+                        const ratio = (forecastPrice - lastPrice) / lastPrice;
+                        growth = parseFloat(ratio * 100);
+                        const cagrExp = (period.months !== null ? period.months : noOfMonths) / 12;
+                        cagr = parseFloat((Math.pow((forecastPrice / lastPrice), (1 / cagrExp)) - 1) * 100);
+                    }
+
+                    const divsInRange = this.dividends
+                        .map((item, idx) => ({ date: new Date(item.date), price: item.price * this.fxRate }))
+                        .filter(item => item.date >= startDate && item.date <= endDate && item.price > 0);
+                    
+                    if (divsInRange.length > 0) {
+                        const start = divsInRange[0];
+                        const end = divsInRange[divsInRange.length - 1];
+                        const years = (end.date - start.date) / (1000 * 60 * 60 * 24 * 365.25);
+
+                        if (years >= 0.5 && start.price > 0) {
+                            divCagr = parseFloat(((end.price / start.price) ** (1 / years) - 1) * 100);
+                        } else {
+                            divCagr = null;
+                        }
+                    }
+
+                    let trStartPrice = lastPrice;
+                    let trEndPrice = forecastPrice;
+                    let trDivSum = 0;
+                    const trCagrExp = (period.months !== null ? period.months : noOfMonths) / 12;
+                    const totalDivsInRange = this.dividends
+                        .map((item, idx) => ({ date: new Date(item.date), price: item.priec * this.fxRate }))
+                        .filter(item => item.date >= startDate && item.date <= endDate && item.price > 0);
+                    
+                    if (totalDivsInRange.length > 0) {
+                        trDivSum = totalDivsInRange.reduce((sum, d) => sum + d.price, 0);
+                    }
+
+                    if (trStartPrice > 0) {
+                        trCagr = parseFloat((Math.pow(((trEndPrice + trDivSum) / trStartPrice), (1 / trCagrExp)) - 1) * 100);
+                    } else {
+                        trCagr = null;
+                    }
+                }
+
+                prGrowth = parseFloat(((forecastPrice - this.avgPrice) * 100) / this.avgPrice);
+                const trForecastPrice = parseFloat((1 + trCagr / 100) * this.avgPrice);
+                trGrowth = parseFloat((trForecastPrice - this.avgPrice) * this.stocksOwned);
+
+                records.push({
+                    index: period.index,
+                    period: period.label,
+                    forecastPrice: forecastPrice,
+                    growth: growth,
+                    cagr: cagr,
+                    dividendCagr: divCagr,
+                    totalReturnsCagr: trCagr,
+                    priceReturnGrowth: prGrowth,
+                    totalReturns: trGrowth
+                });
+            }
         }
 
         return records;
