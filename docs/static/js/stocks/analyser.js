@@ -57,7 +57,7 @@ class StockAnalyser {
         this.avgPrice = avgPrice;
         this.historicalPerformance = this.getHistoricalPerformance();
         this.futureForecast = this.getFutureForecast();
-        this.recommendations = null;
+        this.recommendations = this.getRecommendations();
         this.riskProfile = null;
     }
 
@@ -306,5 +306,35 @@ class StockAnalyser {
         }
 
         return records;
+    }
+
+    getRecommendations() {
+        const shortTermCagr = this.historicalPerformance
+            .filter(item => ['1 year', '2 years'].includes(item.period))
+            .reduce((sum, d) => sum + d.cagr, 0) / 2;
+        const longTermCagr = this.historicalPerformance
+            .filter(item => ['5 years', '10 years', '15 years', '20 years'].includes(item.period))
+            .reduce((sum, d) => sum + d.cagr, 0) / 4;
+        const shortTermRecommendation = {
+            recommended: shortTermCagr && shortTermCagr >= 7,
+            cagr: shortTermCagr ? shortTermCagr : 0.0,
+            comments: shortTermCagr ? (
+                shortTermCagr >= 7 ? 'Recommended for short-term (1 to 2 years)' : 'Not recommended for short-term (1 to 2 years)'
+            ) : null,
+            risk: shortTermCagr ? classifyRisk(-shortTermCagr, [-10, -7, -4]) : 'Very High'
+        };
+        const longTermRecommendation = {
+            recommended: longTermCagr && longTermCagr >= 5,
+            cagr: longTermCagr ? longTermCagr : 0.0,
+            comments: longTermCagr ? (
+                longTermCagr >= 5 ? 'Recommended for long-term (5+ years)' : 'Not recommended for long-term (5+ years)'
+            ) : null,
+            risk: longTermCagr ? classifyRisk(-longTermCagr, [-8, -5, -3]) : 'Very High'
+        };
+
+        return {
+            shortTerm: shortTermRecommendation,
+            longTerm: longTermRecommendation
+        };
     }
 }
