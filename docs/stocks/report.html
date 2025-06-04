@@ -173,6 +173,7 @@
                     await showHistoricalPerformance(analyserObject.historicalPerformance);
                     await showFutureForecast(
                         analyserObject.futureForecast,
+                        stocksOwned,
                         defaultCurrency
                     );
                     await showLineChart(
@@ -261,11 +262,12 @@
                 });
             }
 
-            async function showFutureForecast(data, defaultCurrency) {
+            async function showFutureForecast(data, stocksOwned, defaultCurrency) {
                 $('#futureperformance-placeholder').load('../public/stocks/future-info.html', async function() {
                     document.dispatchEvent(new CustomEvent('futureForecastReady', {
                         detail: {
                             data: data,
+                            stocksOwned: stocksOwned,
                             defaultCurrency: defaultCurrency
                         }
                     }));

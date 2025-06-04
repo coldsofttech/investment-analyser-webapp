@@ -26,6 +26,7 @@
 <script>
     document.addEventListener('futureForecastReady', async function(event) {
         const data = event.detail?.data;
+        const avgPrice = event.detail?.avgPrice;
         const defaultCurrency = event.detail?.defaultCurrency;
 
         const processedData = await Promise.all(data.map(async (row) => {
