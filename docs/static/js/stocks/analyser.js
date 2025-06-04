@@ -58,7 +58,7 @@ class StockAnalyser {
         this.historicalPerformance = this.getHistoricalPerformance();
         this.futureForecast = this.getFutureForecast();
         this.recommendations = this.getRecommendations();
-        this.riskProfile = null;
+        this.riskProfile = this.getRiskProfile();
     }
 
     #trendlineLinearRegression(x, y) {
@@ -335,6 +335,44 @@ class StockAnalyser {
         return {
             shortTerm: shortTermRecommendation,
             longTerm: longTermRecommendation
+        };
+    }
+
+    getRiskProfile() {
+        const riskProfile = {
+            volatility: {
+                value: this.info?.volatility,
+                risk: classifyRisk(this.info?.volatility, [0.15, 0.30, 0.45])
+            },
+            beta: {
+                value: this.info?.beta,
+                risk: classifyRisk(this.info?.beta, [0.5, 1.2, 1.5])
+            },
+            maxDrawdown: {
+                value: this.info?.maxDrawdown,
+                risk: classifyRisk(this.info?.maxDrawdown, [0.1, 0.3, 0.4])
+            },
+            sharpeRatio: {
+                value: this.info?.sharpeRatio,
+                risk: classifyRisk(this.info?.sharpeRatio, [1, 1.5, 2])
+            },
+            marketCap: {
+                value: this.info?.marketCap,
+                risk: classifyRisk(-this.info?.marketCap, [-200e9, -10e9, -2e9])
+            }
+        }
+        const overallRiskScore = (
+            riskLevelToScore(riskProfile.volatility.risk) + 
+            riskLevelToScore(riskProfile.beta.risk) +
+            riskLevelToScore(riskProfile.maxDrawdown.risk) +
+            riskLevelToScore(riskProfile.sharpeRatio.risk) +
+            riskLevelToScore(riskProfile.marketCap.risk)
+        ) / 5;
+        const overallRisk = getOverallRiskLabel(overallRiskScore);
+
+        return {
+            riskProfile: riskProfile,
+            overallRisk: overallRisk
         };
     }
 }
