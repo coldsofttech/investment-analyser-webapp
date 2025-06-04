@@ -182,6 +182,10 @@ input::placeholder {
     box-shadow: var(--shadow-sm);
 }
 
+div.dt-container div.dt-layout-row {
+    margin: 0 !important;
+}
+
 table.dataTable {
     width: 100%;
     margin-bottom: 30px;
