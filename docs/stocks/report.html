@@ -42,13 +42,6 @@
                 <div id="userbar-placeholder"></div>
                 <div id="header-placeholder"></div>
             </div>
-            <!-- <div class="position-relative sticky-header">
-                <h1 class="title">
-                    <img id="logo" class="logo" />
-                    <span id="company-name"></span>
-                </h1>
-                <div id="riskprofile-placeholder"></div>
-            </div> -->
             <div id="error-placeholder"></div>
             <div id="menu-placeholder"></div>
             <div id="investment-placeholder"></div>
@@ -216,15 +209,15 @@
             async function showCompanyInfo(compInfo, priceInfo, fxRate, ticker, stocksOwned, avgPrice, defaultCurrency) {
                 $('#header-placeholder').load('../public/header.html', async function() {
                     const title = `${compInfo?.companyName} (${ticker})`;
+                    const logoUrl = await renderLogo(await truncWebsite(compInfo?.website));
 
                     document.dispatchEvent(new CustomEvent('headerReady', {
                         detail: {
                             title: title,
+                            logo: logoUrl
                         }
                     }));
                 });
-                // $('#logo').attr('src', await renderLogo(await truncWebsite(compInfo?.website)));
-                // $('#company-name').text(`${compInfo?.companyName} (${ticker})`);
 
                 $('#companyinfo-placeholder').load('../public/stocks/company-info.html', async function() {
                     document.dispatchEvent(new CustomEvent('companyInfoReady', {
