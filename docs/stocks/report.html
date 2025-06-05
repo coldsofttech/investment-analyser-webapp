@@ -215,12 +215,13 @@
         
             async function showCompanyInfo(compInfo, priceInfo, fxRate, ticker, stocksOwned, avgPrice, defaultCurrency) {
                 $('#header-placeholder').load('../public/header.html', async function() {
-                    document.dispatchEvent(new CustomEvent('headerReady'), {
+                    const title = `${compInfo?.companyName} (${ticker})`;
+
+                    document.dispatchEvent(new CustomEvent('headerReady', {
                         detail: {
-                            // logo: await truncWebsite(compInfo?.website),
-                            title: `${compInfo?.companyName} (${ticker})`
+                            title: title,
                         }
-                    });
+                    }));
                 });
                 // $('#logo').attr('src', await renderLogo(await truncWebsite(compInfo?.website)));
                 // $('#company-name').text(`${compInfo?.companyName} (${ticker})`);
