@@ -24,10 +24,12 @@ body {
     color: var(--text-dark);
 }
 
-#userbar-placeholder {
+#userbar-placeholder,
+#header-placeholder {
     position: sticky;
     top: 0;
     z-index: 1020;
+    background-color: var(--bg-light);
 }
 
 .position-relative.sticky-header {
