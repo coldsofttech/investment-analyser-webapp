@@ -12,9 +12,9 @@
     </head>
     <body>
         <div class="container">
-            <div id="userbar-placeholder"></div>
-            <div class="position-relative">
-                <h1 class="title">Investment Analyser</h1>
+            <div id="freeze-pane">
+                <div id="userbar-placeholder"></div>
+                <div id="header-placeholder"></div>
             </div>
             <div id="error-placeholder"></div>
             <div id="menu-placeholder"></div>
@@ -39,6 +39,13 @@
                 });
                 $('#userbar-placeholder').load('public/user-bar.html', async function() {
                     document.dispatchEvent(new Event('userBarReady'));
+                });
+                $('#header-placeholder').load('public/header.html', async function() {
+                    document.dispatchEvent(new CustomEvent('headerReady'), {
+                        detail: {
+                            title: 'Investment Analyser'
+                        }
+                    });
                 });
                 $('#menu-placeholder').load('public/menu.html', async function() {
                     document.dispatchEvent(new Event('menuReady'));
