@@ -24,6 +24,20 @@ body {
     color: var(--text-dark);
 }
 
+#userbar-placeholder {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+.position-relative.sticky-header {
+    position: sticky;
+    top: 40px;
+    z-index: 1010;
+    padding: 10px 0;
+    border-bottom: 1px solid #CCC;
+}
+
 .header {
     display: flex;
     justify-content: space-between;
