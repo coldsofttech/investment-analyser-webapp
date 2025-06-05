@@ -217,7 +217,7 @@
                 $('#header-placeholder').load('../public/header.html', async function() {
                     document.dispatchEvent(new CustomEvent('headerReady'), {
                         detail: {
-                            logo: await truncWebsite(compInfo?.website),
+                            // logo: await truncWebsite(compInfo?.website),
                             title: `${compInfo?.companyName} (${ticker})`
                         }
                     });
