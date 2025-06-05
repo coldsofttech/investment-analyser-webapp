@@ -24,8 +24,7 @@ body {
     color: var(--text-dark);
 }
 
-#userbar-placeholder,
-#header-placeholder {
+.freeze-pane {
     position: sticky;
     top: 0;
     z-index: 1020;
