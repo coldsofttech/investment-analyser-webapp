@@ -82,11 +82,14 @@
                     document.dispatchEvent(new Event('userBarReady'));
                 });
                 $('#header-placeholder').load('../public/header.html', async function() {
-                    document.dispatchEvent(new CustomEvent('headerReady'), {
+                    const title = 'Stocks Analyser';
+
+                    document.dispatchEvent(new CustomEvent('headerReady', {
                         detail: {
-                            title: 'Stocks Analyser'
+                            title: title,
+                            logo: ''
                         }
-                    });
+                    }));
                 });
                 $('#menu-placeholder').load('../public/menu.html', async function() {
                     document.dispatchEvent(new Event('menuReady'));

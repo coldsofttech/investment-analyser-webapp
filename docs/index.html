@@ -39,11 +39,14 @@
                     document.dispatchEvent(new Event('userBarReady'));
                 });
                 $('#header-placeholder').load('public/header.html', async function() {
-                    document.dispatchEvent(new CustomEvent('headerReady'), {
+                    const title = 'Welcome to Investment Analyser';
+
+                    document.dispatchEvent(new CustomEvent('headerReady', {
                         detail: {
-                            title: 'Welcome to Investment Analyser'
+                            title: title,
+                            logo: ''
                         }
-                    });
+                    }));
                 });
                 $('#welcomemessage-placeholder').load('public/welcome-message.html');
             });
