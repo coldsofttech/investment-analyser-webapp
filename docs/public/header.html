@@ -1,0 +1,17 @@
+<h1 class="title">
+    <img id="logo" class="logo" />
+    <span id="title"></span>
+</h1>
+
+<script>
+    document.addEventListener('headerReady', async function(event) {
+        const logo = event.detail?.logo;
+        const title = event.detail?.title;
+
+        if (logo) {
+            $('#logo').attr('src', await renderLogo(logo));
+        }
+
+        $('#title').text(title);
+    });
+</script>
