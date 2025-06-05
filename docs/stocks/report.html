@@ -42,7 +42,7 @@
             <div class="position-relative sticky-header">
                 <h1 class="title">
                     <img id="logo" class="logo" />
-                    <span id="companyName"></span>
+                    <span id="company-name"></span>
                 </h1>
                 <div id="riskprofile-placeholder"></div>
             </div>
@@ -212,7 +212,7 @@
         
             async function showCompanyInfo(compInfo, priceInfo, fxRate, ticker, stocksOwned, avgPrice, defaultCurrency) {
                 $('#logo').attr('src', await renderLogo(await truncWebsite(compInfo?.website)));
-                $('#companyName').text(`${compInfo?.companyName} (${ticker})`);
+                $('#company-name').text(`${compInfo?.companyName} (${ticker})`);
 
                 $('#companyinfo-placeholder').load('../public/stocks/company-info.html', async function() {
                     document.dispatchEvent(new CustomEvent('companyInfoReady', {
