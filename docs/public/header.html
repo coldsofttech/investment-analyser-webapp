@@ -8,10 +8,10 @@
         const logo = event.detail?.logo;
         const title = event.detail?.title;
 
-        if (logo) {
-            $('#logo').attr('src', await renderLogo(logo));
-        }
-
         $('#title').text(title);
+
+        // if (logo) {
+        //     $('#logo').attr('src', await renderLogo(logo));
+        // }
     });
 </script>
