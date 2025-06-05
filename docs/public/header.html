@@ -7,6 +7,8 @@
     document.addEventListener('headerReady', async function(event) {
         const logo = event.detail?.logo;
         const title = event.detail?.title;
+        console.log(title);
+        console.log(logo);
 
         $('#title').text(title);
 
