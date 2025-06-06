@@ -39,4 +39,12 @@
     window.addEventListener('resize', () => {
         renderResponsiveChart();
     });
+
+    window.matchMedia('print').addListener(function(mql) {
+        if (mql.matches) {
+            document.querySelectorAll('.print .js-plotly-plot').forEach(function(chart) {
+                Plotly.Plots.resize(chart);
+            });
+        }
+    });
 </script>
