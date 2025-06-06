@@ -402,11 +402,13 @@ table.dataTable tbody tr:hover {
     color: white !important;
 }
 
-.risk-bar {
+.risk-level {
     position: fixed;
     flex: 1;
     text-align: center;
-    padding: 10px;
+    padding: 1rem;
+    color: white;
+    font-weight: bold;
     top: 50%;
     left: 0;
     transform: translateY(-50%);
@@ -418,14 +420,6 @@ table.dataTable tbody tr:hover {
     height: 75%;
     width: 30px;
     line-height: 0.5;
-}
-
-.risk-level {
-    flex: 1;
-    text-align: center;
-    padding: 1rem;
-    color: white;
-    font-weight: bold;
 }
 
 .low { background-color: green; }
@@ -575,17 +569,14 @@ input:checked + .slider:before {
         padding-bottom: 20px; 
     }
 
-    .risk-bar {
+    .risk-level {
+        padding: 0.75rem;
+        font-size: 0.9rem;
         flex: 1;
         text-align: center;
         padding: 1rem;
         transition: opacity 0.3s ease-in-out;
         border-radius: 8px;
-    }
-
-    .risk-level {
-        padding: 0.75rem;
-        font-size: 0.9rem;
     }
 
     .custom-tooltip {
