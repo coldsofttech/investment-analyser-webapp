@@ -259,113 +259,103 @@
                         priceInfo: priceInfo,
                         defaultCurrency: defaultCurrency
                     }
-                })
-                // $('#header-placeholder').load('../public/header.html', async function() {
-                //     const title = `${compInfo?.companyName} (${ticker})`;
-                //     const logoUrl = await renderLogo(await truncWebsite(compInfo?.website));
-
-                //     document.dispatchEvent(new CustomEvent('headerReady', {
-                //         detail: {
-                //             title: title,
-                //             logo: logoUrl
-                //         }
-                //     }));
-                // });
-
-                // $('#companyinfo-placeholder').load('../public/stocks/company-info.html', async function() {
-                //     document.dispatchEvent(new CustomEvent('companyInfoReady', {
-                //         detail: {
-                //             info: compInfo,
-                //             stocksOwned: stocksOwned,
-                //             avgPrice: avgPrice,
-                //             fxRate: fxRate,
-                //             priceInfo: priceInfo,
-                //             defaultCurrency: defaultCurrency
-                //         }
-                //     }));
-                // });
+                });
             }
         
             async function showInvestmentInfo(priceInfo, fxRate, stocksOwned, avgPrice, defaultCurrency) {
-                $('#investment-placeholder').load('../public/stocks/investment-info.html', async function() {
-                    document.dispatchEvent(new CustomEvent('investmentInfoReady', {
-                        detail: {
-                            priceInfo: priceInfo,
-                            fxRate: fxRate,
-                            stocksOwned: stocksOwned,
-                            avgPrice: avgPrice,
-                            defaultCurrency: defaultCurrency
-                        }
-                    }));
+                await loadFragmentAndDispatch({
+                    selector: '#investment-placeholder',
+                    url: '../public/stocks/investment-info.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'investmentInfoReady',
+                    detail: {
+                        priceInfo: priceInfo,
+                        fxRate: fxRate,
+                        stocksOwned: stocksOwned,
+                        avgPrice: avgPrice,
+                        defaultCurrency: defaultCurrency
+                    }
                 });
             }
 
             async function showFXRateFooter(to, fromList, convRates) {
-                $('#keyterminology-placeholder').load('../public/stocks/key-terminology.html', async function() {
-                    document.dispatchEvent(new CustomEvent('keyTerminologyReady', {
-                        detail: {
-                            to: to,
-                            fromList: fromList,
-                            convRates: convRates
-                        }
-                    }));
+                await loadFragmentAndDispatch({
+                    selector: '#keyterminology-placeholder',
+                    url: '../public/stocks/key-terminology.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'keyTerminologyReady',
+                    detail: {
+                        to: to,
+                        fromList: fromList,
+                        convRates: convRates
+                    }
                 });
             }
 
             async function showHistoricalPerformance(data) {
-                $('#historicalperformance-placeholder').load('../public/stocks/history-info.html', async function() {
-                    document.dispatchEvent(new CustomEvent('historicalPerformanceReady', {
-                        detail: {
-                            data: data
-                        }
-                    }));
+                await loadFragmentAndDispatch({
+                    selector: '#historicalperformance-placeholder',
+                    url: '../public/stocks/history-info.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'historicalPerformanceReady',
+                    detail: {
+                        data: data
+                    }
                 });
             }
 
             async function showFutureForecast(data, avgPrice, defaultCurrency) {
-                $('#futureperformance-placeholder').load('../public/stocks/future-info.html', async function() {
-                    document.dispatchEvent(new CustomEvent('futureForecastReady', {
-                        detail: {
-                            data: data,
-                            avgPrice: avgPrice,
-                            defaultCurrency: defaultCurrency
-                        }
-                    }));
+                await loadFragmentAndDispatch({
+                    selector: '#futureperformance-placeholder',
+                    url: '../public/stocks/future-info.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'futureForecastReady',
+                    detail: {
+                        data: data,
+                        avgPrice: avgPrice,
+                        defaultCurrency: defaultCurrency
+                    }
                 });
             }
 
             async function showDividends(dividendsData, events, fxRate, stocksOwned, defaultCurrency) {
-                $('#dividends-placeholder').load('../public/stocks/dividends-info.html', async function() {
-                    document.dispatchEvent(new CustomEvent('dividendsReady', {
-                        detail: {
-                            data: dividendsData,
-                            events: events,
-                            fxRate: fxRate,
-                            stocksOwned: stocksOwned,
-                            defaultCurrency: defaultCurrency
-                        }
-                    }));
+                await loadFragmentAndDispatch({
+                    selector: '#dividends-placeholder',
+                    url: '../public/stocks/dividends-info.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'dividendsReady',
+                    detail: {
+                        data: dividendsData,
+                        events: events,
+                        fxRate: fxRate,
+                        stocksOwned: stocksOwned,
+                        defaultCurrency: defaultCurrency
+                    }
                 });
             }
 
             async function showRecommendations(data) {
-                $('#recommendations-placeholder').load('../public/stocks/recommendations.html', async function() {
-                    document.dispatchEvent(new CustomEvent('recommendationsReady', {
-                        detail: {
-                            shortTerm: data?.shortTerm,
-                            longTerm: data?.longTerm
-                        }
-                    }));
+                await loadFragmentAndDispatch({
+                    selector: '#recommendations-placeholder',
+                    url: '../public/stocks/recommendations.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'recommendationsReady',
+                    detail: {
+                        shortTerm: data?.shortTerm,
+                        longTerm: data?.longTerm
+                    }
                 });
             }
 
             async function showRiskProfile(data) {
-                $('#riskprofile-placeholder').load('../public/stocks/risk-profile.html', async function() {
-                    document.dispatchEvent(new CustomEvent('riskProfileReady', {
-                        detail: {
-                            data: data
-                        }
-                    }));
+                await loadFragmentAndDispatch({
+                    selector: '#riskprofile-placeholder',
+                    url: '../public/stocks/risk-profile.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'riskProfileReady',
+                    detail: {
+                        data: data
+                    }
                 });
             }
         
@@ -386,15 +376,17 @@
                     chartData.avgLine = { value: parseFloat(avgPrice) };
                 }
 
-                $('#stockchart-placeholder').load('../public/stocks/stock-chart.html', async function() {
-                    document.dispatchEvent(new CustomEvent('lineChartReady', {
-                        detail: {
-                            data: chartData,
-                            title: 'Historical Data',
-                            currency: defaultCurrency.currency,
-                            showLegend: false
-                        }
-                    }));
+                await loadFragmentAndDispatch({
+                    selector: '#stockchart-placeholder',
+                    url: '../public/stocks/stock-chart.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'lineChartReady',
+                    detail: {
+                        data: chartData,
+                        title: 'Historical Data',
+                        currency: defaultCurrency.currency,
+                        showLegend: false
+                    }
                 });
             }
         </script>

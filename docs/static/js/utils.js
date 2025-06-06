@@ -11,17 +11,37 @@ async function loadFragmentAndDispatch({
     selector,
     url,
     eventType = 'Event',
-    eventName,
-    detail = null
+    eventName = null,
+    detail = null,
+    execFunctions = []
 }) {
-    return new Promise((resolve) => {
-        $(selector).load(url, () => {
-            const event = eventType === 'CustomEvent'
-                ? new CustomEvent(eventName, { detail })
-                : new Event(eventName);
-            
-            document.dispatchEvent(event);
-            resolve();
+    execFunctions = Array.isArray(execFunctions) ? execFunctions : [];
+
+    return new Promise((resolve, reject) => {
+        $(selector).load(url, async function(response, status, xhr) {
+            if (status === 'error') {
+                return reject(new Error(`Failed to load ${url}: ${xhr.statusText}`));
+            }
+
+            let event = null;
+            if (eventName) {
+                event = eventType === 'CustomEvent'
+                    ? new CustomEvent(eventName, { detail })
+                    : new Event(eventName);
+                
+                document.dispatchEvent(event);
+            }
+
+            try {
+                for (const fn of execFunctions) {
+                    if (typeof fn === 'function') {
+                        await fn();
+                    }
+                }
+                resolve();
+            } catch (err) {
+                reject(err);
+            }
         });
     });
 }

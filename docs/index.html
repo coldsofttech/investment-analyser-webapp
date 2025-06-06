@@ -32,23 +32,34 @@
 
         <script>
             $(async function() {
-                $('#error-placeholder').load('public/error.html', async function() {
-                    document.dispatchEvent(new Event('errorReady'));
-                });
-                $('#userbar-placeholder').load('public/user-bar.html', async function() {
-                    document.dispatchEvent(new Event('userBarReady'));
-                });
-                $('#header-placeholder').load('public/header.html', async function() {
-                    const title = 'Welcome to Investment Analyser';
-
-                    document.dispatchEvent(new CustomEvent('headerReady', {
+                const htmlFragments = [
+                    {
+                        selector: '#error-placeholder',
+                        url: 'public/error.html',
+                        eventName: 'errorReady'
+                    },
+                    {
+                        selector: '#userbar-placeholder',
+                        url: 'public/user-bar.html',
+                        eventName: 'userBarReady'
+                    },
+                    {
+                        selector: '#header-placeholder',
+                        url: 'public/header.html',
+                        eventType: 'CustomEvent',
+                        eventName: 'headerReady',
                         detail: {
-                            title: title,
+                            title: 'Welcome to Investment Analyser',
                             logo: ''
                         }
-                    }));
-                });
-                $('#welcomemessage-placeholder').load('public/welcome-message.html');
+                    },
+                    {
+                        selector: '#welcomemessage-placeholder',
+                        url: 'public/welcome-message.html'
+                    }
+                ];
+
+                await loadAllFragments(htmlFragments);
             });
         </script>
     </body>
