@@ -658,6 +658,10 @@ input:checked + .slider:before {
         height: auto !important;
     }
 
+    script, script * {
+        display: none !important;
+    }
+
     @page {
         size: landscape;
         margin: 10mm;
