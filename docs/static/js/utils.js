@@ -7,6 +7,25 @@ function isMobileView() {
     return window.innerWidth < 768;
 }
 
+async function loadFragmentAndDispatch({
+    selector,
+    url,
+    eventType = 'Event',
+    eventName,
+    detail = null
+}) {
+    return new Promise((resolve) => {
+        $(selector).load(url, () => {
+            const event = eventType === 'CustomEvent'
+                ? new CustomEvent(eventName, { detail })
+                : new Event(eventName);
+            
+            document.dispatchEvent(event);
+            resolve();
+        });
+    });
+}
+
 async function formatCurrency(value, defaultCurrency, fullSymbol = false) {
     const suffixes = ['', 'k', 'm', 'b', 't'];
     let magnitude = 0;
