@@ -7,6 +7,6 @@
         const data = event.detail?.data;
 
         $('#risk-profile').text(data?.overallRisk);
-        $('#risk-level').attr('class', `risk-level ${data?.overallRisk.replace(' ', '-')}`);
+        $('#risk-level').attr('class', `risk-level ${data?.overallRisk.replace(' ', '-').toLowerCase()}`);
     });
 </script>
