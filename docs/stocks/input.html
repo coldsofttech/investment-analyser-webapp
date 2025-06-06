@@ -75,30 +75,44 @@
 
         <script>
             $(async function() {
-                $('#error-placeholder').load('../public/error.html', async function() {
-                    document.dispatchEvent(new Event('errorReady'));
-                });
-                $('#userbar-placeholder').load('../public/user-bar.html', async function() {
-                    document.dispatchEvent(new Event('userBarReady'));
-                });
-                $('#header-placeholder').load('../public/header.html', async function() {
-                    const title = 'Stocks Analyser';
-
-                    document.dispatchEvent(new CustomEvent('headerReady', {
+                const htmlFragments = [
+                    {
+                        selector: '#error-placeholder',
+                        url: '../public/error.html',
+                        eventName: 'errorReady'
+                    },
+                    {
+                        selector: '#userbar-placeholder',
+                        url: '../public/user-bar.html',
+                        eventName: 'userBarReady'
+                    },
+                    {
+                        selector: '#header-placeholder',
+                        url: '../public/header.html',
+                        eventType: 'CustomEvent',
+                        eventName: 'headerReady',
                         detail: {
-                            title: title,
+                            title: 'Stocks Analyser',
                             logo: ''
                         }
-                    }));
-                });
-                $('#menu-placeholder').load('../public/menu.html', async function() {
-                    document.dispatchEvent(new Event('menuReady'));
-                });
-                $('#tickerinputform-placeholder').load('../public/stocks/ticker-input-form.html', async function() {
-                    document.dispatchEvent(new Event('tickerInputFormReady'));
-                    await initForm();
-                    await initSubmitButton();
-                });
+                    },
+                    {
+                        selector: '#menu-placeholder',
+                        url: '../public/menu.html',
+                        eventName: 'menuReady'
+                    },
+                    {
+                        selector: '#tickerinputform-placeholder',
+                        url: '../public/stocks/ticker-input-form.html',
+                        eventName: 'tickerInputFormReady',
+                        execFunctions: [
+                            initForm,
+                            initSubmitButton
+                        ]
+                    }
+                ];
+
+                await loadAllFragments(htmlFragments);s
             });
 
             async function initForm() {
