@@ -121,6 +121,14 @@
                 }
             });
 
+            window.addEventListener('beforeprint', () => {
+                document.body.classList.add('force-desktop');
+            });
+
+            window.addEventListener('afterprint', () => {
+                document.body.classList.remove('force-desktop');
+            });
+
             async function initPage() {
                 const { urlParams, ticker, stocksOwned, avgPrice } = await parseParams();
                 const errorRedirectionUrl = `

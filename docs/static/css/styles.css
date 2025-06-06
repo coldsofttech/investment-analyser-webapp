@@ -635,6 +635,10 @@ input:checked + .slider:before {
 }
 
 @media print {
+    body.force-desktop {
+        width: 1200px !important;
+    }
+    
     body * {
         display: none !important;
     }
