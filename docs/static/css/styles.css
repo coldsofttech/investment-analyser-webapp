@@ -638,7 +638,7 @@ input:checked + .slider:before {
     body.force-desktop {
         width: 1200px !important;
     }
-    
+
     body * {
         display: none !important;
     }
@@ -668,11 +668,13 @@ input:checked + .slider:before {
 
     @page {
         size: landscape;
-        margin: 10mm;
+        margin: 0;
     }
 
     body {
         font-size: 12pt;
         background: var(--neutral-bg) !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 }
