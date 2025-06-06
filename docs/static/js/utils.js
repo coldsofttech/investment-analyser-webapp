@@ -26,6 +26,10 @@ async function loadFragmentAndDispatch({
     });
 }
 
+async function loadAllFragments(fragments) {
+    await Promise.all(fragments.map(loadFragmentAndDispatch));
+}
+
 async function formatCurrency(value, defaultCurrency, fullSymbol = false) {
     const suffixes = ['', 'k', 'm', 'b', 't'];
     let magnitude = 0;

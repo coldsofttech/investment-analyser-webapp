@@ -78,43 +78,50 @@
             $(async function() {
                 const htmlFragments = [
                     {
-                        selector: '#userbar-placeholder',
-                        url: '../public/user-bar.html',
-                        eventName: 'userBarReady'
-                    }
-                ];
-                $('#loading-placeholder').load('../public/loading.html', async function() {
-                    document.dispatchEvent(new CustomEvent('loadingOverlayReady', {
+                        selector: '#loading-placeholder',
+                        url: '../public/loading.html',
+                        eventType: 'CustomEvent',
+                        eventName: 'loadingOverlayReady',
                         detail: {
                             message: 'Your awesome "Stock Analysis" report is loading. Hang tight! If it takes too long, just refresh the page...'
                         }
-                    }));
-                });
-                $('#error-placeholder').load('../public/error.html', async function() {
-                    document.dispatchEvent(new Event('errorReady'));
-                });
-                // $('#userbar-placeholder').load('../public/user-bar.html', async function() {
-                //     document.dispatchEvent(new Event('userBarReady'));
-                // });
-                $('#menu-placeholder').load('../public/menu.html', async function() {
-                    document.dispatchEvent(new Event('menuReady'));
-                });
-                $('#scrolltotop-placeholder').load('../public/scroll-to-top.html', async function() {
-                    document.dispatchEvent(new Event('scrollToTopReady'));
-                });
+                    },
+                    {
+                        selector: '#error-placeholder',
+                        url: '../public/error.html',
+                        eventName: 'errorReady'
+                    },
+                    {
+                        selector: '#userbar-placeholder',
+                        url: '../public/user-bar.html',
+                        eventName: 'userBarReady'
+                    },
+                    {
+                        selector: '#menu-placeholder',
+                        url: '../public/menu.html',
+                        eventName: 'menuReady'
+                    },
+                    {
+                        selector: '#scrolltotop-placeholder',
+                        url: '../public/scroll-to-top.html',
+                        eventName: 'scrollToTopReady'
+                    }
+                ];
 
-                await loadAllFragments(htmlFragments);
-                await initPage();
+                await loadFragmentAndDispatch(htmlFragments[0]);
+                $('#loading-overlay').show();
+
+                try {
+                    await loadAllFragments(htmlFragments.slice(1));
+                    await initPage();
+                } catch (err) {
+                    console.warn(err);
+                } finally {
+                    $('#loading-overlay').hide();
+                }
             });
 
-            async function loadAllFragments(fragments) {
-                await Promise.all(fragments.map(loadFragmentAndDispatch));
-            }
-
             async function initPage() {
-                const $loadingOverlay = $('#loading-overlay');
-                $loadingOverlay.show();
-
                 const { urlParams, ticker, stocksOwned, avgPrice } = await parseParams();
                 const errorRedirectionUrl = `
                     ${getRootPath()}stocks/input.html?${decodeURIComponent(urlParams.toString())}
@@ -150,7 +157,9 @@
 
                 if (tickerObject.error) {
                     return displayError(tickerObject.error.message, true, errorRedirectionUrl);
-                } else {
+                } 
+
+                await Promise.all([
                     await showCompanyInfo(
                         tickerObject.companyInfo, 
                         tickerObject.priceInfo,
@@ -159,41 +168,47 @@
                         stocksOwned, 
                         avgPrice, 
                         defaultCurrency
-                    );
+                    ),
                     await showInvestmentInfo(
                         tickerObject.priceInfo,
                         tickerObject.fxRate,
                         stocksOwned,
                         avgPrice,
                         defaultCurrency
-                    );
+                    ),
                     await showFXRateFooter(
                         defaultCurrency.currency,
                         [tickerObject.companyInfo?.currency],
                         [tickerObject.fxRate]
-                    );
+                    ),
                     await showDividends(
                         tickerObject.dividends,
                         tickerObject.events,
                         tickerObject.fxRate,
                         stocksOwned,
                         defaultCurrency
-                    );
-                    await showHistoricalPerformance(analyserObject.historicalPerformance);
+                    ),
+                    await showHistoricalPerformance(
+                        analyserObject.historicalPerformance
+                    ),
                     await showFutureForecast(
                         analyserObject.futureForecast,
                         avgPrice,
                         defaultCurrency
-                    );
-                    await showRecommendations(analyserObject.recommendations);
-                    await showRiskProfile(analyserObject.riskProfile);
+                    ),
+                    await showRecommendations(
+                        analyserObject.recommendations
+                    ),
+                    await showRiskProfile(
+                        analyserObject.riskProfile
+                    ),
                     await showLineChart(
                         tickerObject.stockData,
                         tickerObject.fxRate,
                         avgPrice,
                         defaultCurrency
-                    );
-                }
+                    )
+                ]);
             }
 
             async function parseParams() {
@@ -220,30 +235,55 @@
             }
         
             async function showCompanyInfo(compInfo, priceInfo, fxRate, ticker, stocksOwned, avgPrice, defaultCurrency) {
-                $('#header-placeholder').load('../public/header.html', async function() {
-                    const title = `${compInfo?.companyName} (${ticker})`;
-                    const logoUrl = await renderLogo(await truncWebsite(compInfo?.website));
-
-                    document.dispatchEvent(new CustomEvent('headerReady', {
-                        detail: {
-                            title: title,
-                            logo: logoUrl
-                        }
-                    }));
+                await loadFragmentAndDispatch({
+                    selector: '#header-placeholder',
+                    url: '../public/header.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'headerReady',
+                    detail: {
+                        title: `${compInfo?.companyName} (${ticker})`,
+                        logo: await renderLogo(await truncWebsite(compInfo?.website))
+                    }
                 });
 
-                $('#companyinfo-placeholder').load('../public/stocks/company-info.html', async function() {
-                    document.dispatchEvent(new CustomEvent('companyInfoReady', {
-                        detail: {
-                            info: compInfo,
-                            stocksOwned: stocksOwned,
-                            avgPrice: avgPrice,
-                            fxRate: fxRate,
-                            priceInfo: priceInfo,
-                            defaultCurrency: defaultCurrency
-                        }
-                    }));
-                });
+                await loadFragmentAndDispatch({
+                    selector: '#companyinfo-placeholder',
+                    url: '../public/stocks/company-info.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'companyInfoReady',
+                    detail: {
+                        info: compInfo,
+                        stocksOwned: stocksOwned,
+                        avgPrice: avgPrice,
+                        fxRate: fxRate,
+                        priceInfo: priceInfo,
+                        defaultCurrency: defaultCurrency
+                    }
+                })
+                // $('#header-placeholder').load('../public/header.html', async function() {
+                //     const title = `${compInfo?.companyName} (${ticker})`;
+                //     const logoUrl = await renderLogo(await truncWebsite(compInfo?.website));
+
+                //     document.dispatchEvent(new CustomEvent('headerReady', {
+                //         detail: {
+                //             title: title,
+                //             logo: logoUrl
+                //         }
+                //     }));
+                // });
+
+                // $('#companyinfo-placeholder').load('../public/stocks/company-info.html', async function() {
+                //     document.dispatchEvent(new CustomEvent('companyInfoReady', {
+                //         detail: {
+                //             info: compInfo,
+                //             stocksOwned: stocksOwned,
+                //             avgPrice: avgPrice,
+                //             fxRate: fxRate,
+                //             priceInfo: priceInfo,
+                //             defaultCurrency: defaultCurrency
+                //         }
+                //     }));
+                // });
             }
         
             async function showInvestmentInfo(priceInfo, fxRate, stocksOwned, avgPrice, defaultCurrency) {
