@@ -76,6 +76,13 @@
 
         <script>
             $(async function() {
+                const htmlFragments = [
+                    {
+                        selector: '#userbar-placeholder',
+                        url: '../public/user-bar.html',
+                        eventName: 'userBarReady'
+                    }
+                ];
                 $('#loading-placeholder').load('../public/loading.html', async function() {
                     document.dispatchEvent(new CustomEvent('loadingOverlayReady', {
                         detail: {
@@ -86,9 +93,9 @@
                 $('#error-placeholder').load('../public/error.html', async function() {
                     document.dispatchEvent(new Event('errorReady'));
                 });
-                $('#userbar-placeholder').load('../public/user-bar.html', async function() {
-                    document.dispatchEvent(new Event('userBarReady'));
-                });
+                // $('#userbar-placeholder').load('../public/user-bar.html', async function() {
+                //     document.dispatchEvent(new Event('userBarReady'));
+                // });
                 $('#menu-placeholder').load('../public/menu.html', async function() {
                     document.dispatchEvent(new Event('menuReady'));
                 });
@@ -96,8 +103,13 @@
                     document.dispatchEvent(new Event('scrollToTopReady'));
                 });
 
-                setTimeout(async () => { await initPage() }, 0);
+                await loadAllFragments(htmlFragments);
+                await initPage();
             });
+
+            async function loadAllFragments(fragments) {
+                await Promise.all(fragments.map(loadFragmentAndDispatch));
+            }
 
             async function initPage() {
                 const $loadingOverlay = $('#loading-overlay');
