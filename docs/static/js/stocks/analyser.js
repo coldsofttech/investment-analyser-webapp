@@ -357,7 +357,7 @@ class StockAnalyser {
                 risk: classifyRisk(this.info?.sharpeRatio, [1, 1.5, 2])
             },
             marketCap: {
-                value: this.info?.marketCap,
+                value: this.info?.marketCap * this.fxRate,
                 risk: classifyRisk(-this.info?.marketCap, [-200e9, -10e9, -2e9])
             }
         }
