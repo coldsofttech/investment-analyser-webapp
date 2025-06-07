@@ -22,7 +22,10 @@
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="#"><span class="padding-extra">New Pie</span></a>
+                            <a id="nav-pies-new-stocks-owned" class="dropdown-item" href="#"><span class="padding-extra">New Pie (by Stocks Owned)</span></a>
+                        </li>
+                        <li>
+                            <a id="nav-pies-new-percentage" class="dropdown-item" href="#"><span class="padding-extra">New Pie (by Percentage)</span></a>
                         </li>
                         <li>
                             <a class="dropdown-item" href="#"><span class="padding-extra">Load Pie</span></a>
@@ -39,7 +42,9 @@
         const appRootPath = getRootPath();
         const links = {
             'nav-menu': 'menu.html',
-            'nav-stocks-input': 'stocks/input.html'
+            'nav-stocks-input': 'stocks/input.html',
+            'nav-pies-new-stocks-owned': 'stocks/pies/input.html?by=StocksOwned',
+            'nav-pies-new-percentage': 'stocks/pies/input.html?by=Percentage'
         };
 
         for (const [id, path] of Object.entries(links)) {

@@ -5,10 +5,11 @@
     </div>
     <div class="col-md-8">
         <div class="input-group">
+            <input type="hidden" id="rowIndex">
             <input type="text" class="form-control" name="ticker" id="ticker" placeholder="Ticker" 
                    pattern="^[A-Z0-9.]+$" title="Only uppercase letters, numbers, and '.' are allowed." 
                    required>
-            <li class="input-group-text bi bi-alphabet-uppercase"></li>
+            <i class="input-group-text bi bi-alphabet-uppercase"></i>
         </div>
     </div>
 </div>
@@ -22,7 +23,7 @@
         <div class="input-group">
             <input type="number" class="form-control" name="stocksOwned" id="stocksOwned" step="any" 
                    placeholder="0.00">
-            <li class="input-group-text bi bi-123"></li>
+            <i class="input-group-text bi bi-123"></i>
         </div>
     </div>
 </div>
@@ -36,7 +37,7 @@
         <div class="input-group">
             <input type="currency" class="form-control" name="avgPrice" id="avgPrice" step="0.01" 
                    placeholder="0.00">
-            <li class="input-group-text bi bi-cash" id="currencySymbol"></li>
+            <i class="input-group-text bi bi-cash" id="currencySymbol"></i>
         </div>
     </div>
 </div>
