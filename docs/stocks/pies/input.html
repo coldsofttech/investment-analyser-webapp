@@ -77,6 +77,7 @@
         </style>
     </head>
     <body>
+        <div id="scrolltotop-placeholder"></div>
         <div class="container">
             <div id="freeze-pane">
                 <div id="userbar-placeholder"></div>
@@ -152,6 +153,10 @@
                 </div>
                 <div class="row padding">
                     <div class="col-md-12 text-right">
+                        <button type="button" id="download" class="btn btn-custom-blue w-download-responsive" title="Download">
+                            <i class="bi bi-download me-md-0 me-0"></i>
+                            <span class="d-none d-md-inline">Download</span>
+                        </button>
                         <button type="submit" id="submit" class="btn btn-custom-blue w-submit-responsive" title="Analyse">
                             <i class="bi bi-clipboard2-data me-md-0 me-0"></i>
                             <span class="d-none d-md-inline">Analyse</span>
@@ -162,7 +167,9 @@
 
             <div id="input-dialog" title="Enter Stock details" style="display: none;">
                 <div class="container">
-                    <div id="tickerinputform-placeholder"></div>
+                    <div id="form">
+                        <div id="tickerinputform-placeholder"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -185,10 +192,9 @@
         <script src="../../static/js/validations.js"></script>
 
         <script>
-            let name = null;
-            let noOfStocks = null;
-            let tableExists = null;
-            let inputTable = null;
+            let inputTable;
+            let noOfStocks = 0;
+            let tableExists = false;
 
             $(async function() {
                 const htmlFragments = [
@@ -218,6 +224,11 @@
                         eventName: 'menuReady'
                     },
                     {
+                        selector: '#scrolltotop-placeholder',
+                        url: '../../public/scroll-to-top.html',
+                        eventName: 'scrollToTopReady'
+                    },
+                    {
                         selector: '#tickerinputform-placeholder',
                         url: '../../public/stocks/ticker-input-form.html',
                         eventName: 'tickerInputFormReady',
@@ -229,180 +240,287 @@
             });
 
             async function initNext() {
-                $('#next').click(async function() {
-                    name = $('#name').val();
-                    noOfStocks = parseInt($('#noOfStocks').val());
+                $('#next').on('click', async function() {
+                    const pieName = $('#name').val().trim();
+                    const stocksCount = parseInt($('#noOfStocks').val());
 
-                    if (!name) {
+                    if (!pieName) {
                         return displayError('Please enter a name for the Pie.');
                     }
 
-                    if (isNaN(noOfStocks) || noOfStocks < 1 || noOfStocks > 50) {
-                        return displayError('Please enter a valid number of stocks (1 to 50).')
+                    if (!stocksCount || stocksCount < 1 || stocksCount > 50) {
+                        return displayError('Please enter a valid number of stocks between 1 and 50.');
                     }
 
                     removeError();
+                    noOfStocks = stocksCount;
 
-                    tableExists = $.fn.DataTable.isDataTable('#inputTable');
-                    const hasData = tableExists && $('#inputTable').DataTable().data().count() > 0;
+                    if (tableExists) {
+                        if (!confirm('Proceeding will clear existing data. Do you want to continue?')) {
+                            return;
+                        }
 
-                    if (hasData) {
-                        $(`
-                            <div title="Confirm Overwrite">
-                                Proceeding will clear existing data. Do you want to continue?
-                            </div>
-                        `).dialog({
-                            modal: true,
-                            width: 'auto',
-                            maxWidth: 800,
-                            height: 'auto',
-                            resizable: false,
-                            closeText: 'X',
-                            show: true,
-                            buttons: [
-                                {
-                                    html: '<span>Yes</span>',
-                                    class: 'btn btn-sm btn-custom-blue',
-                                    click: async function() {
-                                        $(this).dialog('close');
-                                        await initInputTable();
-                                    }
-                                },
-                                {
-                                    html: '<span>No</span>',
-                                    class: 'btn btn-sm btn-custom-blue',
-                                    click: function() {
-                                        $(this).dialog('close');
-                                    }
-                                }
-                            ],
-                            create: function() {
-                                $(this).closest('.ui-dialog')
-                                       .find('.ui-dialog-titlebar-close')
-                                       .show();
-                            },
-                            open: function() {
-                                $(this).dialog('option', 'position', {
-                                    my: 'center',
-                                    at: 'center',
-                                    of: window
-                                });
-
-                                const closeBtn = $(this).parent().find('.ui-dialog-titlebar-close');
-                                if (closeBtn.length && closeBtn.html().trim() === '') {
-                                    closeBtn.html(`
-                                        <span class="ui-button-icon ui-icon ui-icon-closethick"></span>
-                                        <span class="ui-button-icon-space"> </span>
-                                    `);
-                                }
-                            }
-                        });
+                        await initInputTable();
                     } else {
                         await initInputTable();
                     }
 
-                    await initDialog();
-                });
-            }
-
-            async function initDialog() {
-                $('#inputTable tbody').on('click', '.fill-btn', function() {
-                    const rowIdx = $(this).data('row');
-                    const rowData = inputTable.row(rowIdx).data();
-
-                    $('#rowIndex').val(rowIdx);
-                    $('#ticker').val(rowData[1] || '');
-                    $('#stocksOwned').val(rowData[2] || '');
-                    $('#avgPrice').val(rowData[3] || '');
-                    $('#input-dialog').dialog({
-                        modal: true,
-                        width: 'auto',
-                        maxWidth: 800,
-                        height: 'auto',
-                        resizable: false,
-                        closeText: 'X',
-                        show: true,
-                        buttons: [
-                            {
-                                html: '<i class="bi bi-floppy"></i>',
-                                class: 'btn btn-sm btn-custom-blue',
-                                click: function() {
-                                    const idx = $('#rowIndex').val();
-                                    const ticker = $('#ticker').val();
-                                    const stocksOwned = $('#stocksOwned').val();
-                                    const avgPrice = $('#avgPrice').val();
-
-                                    if (!ticker) {
-                                        return alert('Ticker is required!');
-                                    }
-
-                                    if (!stocksOwned) {
-                                        return alert('Stocks Owned is required!');
-                                    }
-
-                                    if (!avgPrice) {
-                                        return alert('Avg. Price is required!');
-                                    }
-
-                                    inputTable.row(idx).data([
-                                        parseInt(idx) + 1, 
-                                        ticker,
-                                        stocksOwned,
-                                        avgPrice,
-                                        `<button class='btn btn-sm btn-custom-blue fill-btn' data-row='${idx}'><i class='bi bi-pencil'></i></button>`
-                                    ]).draw(false);
-                                    inputTable[idx] = { ticker, stocksOwned, avgPrice };
-                                    $(this).dialog('close');
-                                }
-                            }
-                        ],
-                        create: function() {
-                            $(this).closest('.ui-dialog')
-                                   .find('.ui-dialog-titlebar-close')
-                                   .show();
-                        },
-                        open: function() {
-                            $(this).dialog('option', 'position', {
-                                my: 'center',
-                                at: 'center',
-                                of: window
-                            });
-
-                            const closeBtn = $(this).parent().find('.ui-dialog-titlebar-close');
-                            if (closeBtn.length && closeBtn.html().trim() === '') {
-                                closeBtn.html(`
-                                    <span class="ui-button-icon ui-icon ui-icon-closethick"></span>
-                                    <span class="ui-button-icon-space"> </span>
-                                `);
-                            }
-                        }
-                    });
+                    $('#input-container').removeClass('d-none');
                 });
             }
 
             async function initInputTable() {
-                $('#input-container').removeClass('d-none');
-
                 if (tableExists) {
-                    $('#inputTable').DataTable().clear().destroy();
+                    inputTable.clear().draw();
+                    $('#inputTableMobileView').empty();
+                } else {
+                    inputTable = $('#inputTable').DataTable({
+                        searching: false,
+                        paging: false,
+                        info: false,
+                        responsive: true,
+                        scrollCollapse: true,
+                        columnDefs: [
+                            { targets: [0], className: 'text-right' },
+                            { targets: [2], className: 'text-right' },
+                            { targets: [3], className: 'text-right' },
+                            { targets: [4], orderable: false, searchable: false }
+                        ],
+                        columns: [
+                            { data: 'index' },
+                            { data: 'ticker' },
+                            { data: 'stocksOwned' },
+                            { 
+                                data: 'avgPrice', 
+                                render: function(data) {
+                                    return data !== '' ? parseFloat(data).toFixed(2) : '';
+                                } 
+                            },
+                            { 
+                                data: null, 
+                                defaultContent: '<button type="button" class="btn btn-sm btn-custom-blue" title="Edit"><i class="bi bi-pencil"></i></button>',
+                                orderable: false,
+                                searchable: false
+                            }
+                        ],
+                        createdRow: function(row, data, dataIndex) {
+                            $('td', row).eq(0).html(dataIndex + 1);
+                            $('td', row).eq(2).addClass('text-right');
+                            $('td', row).eq(3).addClass('text-right');
+                            
+                            const editBtn = $('<button type="button" class="btn btn-sm btn-custom-blue" title="Edit"><i class="bi bi-pencil"></i></button>');
+                            $('td', row).eq(4).empty().append(editBtn);
+
+                            editBtn.on('click', function() {
+                                openEditDialog(dataIndex);
+                            });
+                        }
+                    });
+
+                    tableExists = true;
                 }
 
-                inputTable = $('#inputTable').DataTable({
-                    columnDefs: [{
-                        targets: [0, 2, 3, 4],
-                        createdCell: function(td, cellData, rowData, row, col) {
-                            $(td).css('text-align', 'right');
-                        }
-                    }]
+                for (let i = 0; i < noOfStocks; i++) {
+                    inputTable.row.add({
+                        index: i + 1,
+                        ticker: '',
+                        stocksOwned: '',
+                        avgPrice: ''
+                    }).draw(false);
+                }
+
+                await initInputAccordion();
+                await initDownload();
+                await initSubmit();
+            }
+
+            async function initInputAccordion() {
+                const container = $('#inputTableMobileView');
+                container.empty();
+
+                const parentId = 'inputTableMobileView';
+                let htmlContent = '';
+
+                inputTable.rows().every(function(rowIdx, tableLoop, rowLoop) {
+                    const d = this.data();
+                    const headerId = `${parentId}-header${rowIdx}`;
+                    const collapseId = `${parentId}-collapse${rowIdx}`;
+
+                    const headerContent = `
+                        <h2 class="accordion-header" id="${headerId}">
+                            <button class="accordion-button collapsed p-2" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#${collapseId}"
+                                    aria-expanded="false" aria-controls="${collapseId}">
+                                    <div class="d-flex justify-content-between w-100 padding">
+                                        <span># ${rowIdx + 1} - <strong>${d.ticker || '<em>Empty</em>'}</strong></span>
+                                        <span class="edit-icon" style="cursor: pointer;">
+                                            <i class="bi bi-pencil" data-row="${rowIdx}" onclick="event.stopPropagation(); openEditDialog(${rowIdx});"></i>
+                                        </span>
+                                    </div>
+                            </button>
+                        </h2>
+                    `;
+
+                    const bodyContent = `
+                        <div id="${collapseId}" class="accordion-collapse collapse"
+                             aria-labelledby="${headerId}" data-bs-parent="#${parentId}">
+                             <div class="accordion-body">
+                                <ul class="list-unstyled mb-0">
+                                    <li class="d-flex justify-content-between">
+                                        <strong>Stocks Owned:</strong> <span>${d.stocksOwned}</span>
+                                    </li>
+                                    <li class="d-flex justify-content-between">
+                                        <strong>Avg. Price:</strong> <span>${d.avgPrice}</span>
+                                    </li>
+                                </ul>
+                             </div>
+                        </div>
+                    `;
+
+                    htmlContent += `
+                        <div class="accordion-item">
+                            ${headerContent}
+                            ${bodyContent}
+                        </div>
+                    `;
                 });
 
-                const inputCount = noOfStocks;
-                for (let i = 0; i < inputCount; i++) {
-                    inputTable.row.add([
-                        i + 1, '', '', '',
-                        `<button class='btn btn-sm btn-custom-blue fill-btn' data-row='${i}'><i class='bi bi-pencil'></i></button>`
-                    ]).draw(false);
-                }
+                container.html(htmlContent);
+            }
+
+            async function openEditDialog(rowIndex) {
+                const rowData = inputTable.row(rowIndex).data();
+
+                $('#rowIndex').val(rowIndex);
+                $('#ticker').val(rowData.ticker);
+                $('#stocksOwned').val(rowData.stocksOwned);
+                $('#avgPrice').val(rowData.avgPrice);
+
+                $('#input-dialog').dialog({
+                    modal: true,
+                    width: 'auto',
+                    maxWidth: 500,
+                    height: 'auto',
+                    resizable: false,
+                    closeText: 'X',
+                    show: true,
+                    buttons: [
+                        {
+                            html: '<i class="bi bi-floppy"></i>',
+                            class: 'btn btn-custom-blue',
+                            click: function() {
+                                const tickerVal = $('#ticker').val().trim();
+                                const stocksOwnedVal = $('#stocksOwned').val();
+                                const avgPriceVal = $('#avgPrice').val();
+
+                                if (!tickerVal) {
+                                    return alert('Ticker is required.');
+                                }
+
+                                if (stocksOwnedVal === '' || isNaN(stocksOwnedVal) || parseFloat(stocksOwnedVal) < 0) {
+                                    return alert('Stocks Owned must be a non-negative number.');
+                                }
+
+                                if (avgPriceVal === '' || isNaN(avgPriceVal) || parseFloat(avgPriceVal) < 0) {
+                                    return alert('Avg. Price must be a non-negative number.');
+                                }
+
+                                const idx = parseInt($('#rowIndex').val());
+                                inputTable.row(idx).data({
+                                    index: idx + 1,
+                                    ticker: tickerVal.toUpperCase(),
+                                    stocksOwned: parseFloat(stocksOwnedVal),
+                                    avgPrice: parseFloat(avgPriceVal)
+                                }).draw(false);
+
+                                initInputAccordion();
+                                $(this).dialog('close');
+                            }
+                        }
+                    ],
+                    closeOnEscape: true,
+                    create: function() {
+                        $(this).closest('.ui-dialog').find('.ui-dialog-titlebar-close').show();
+                    },
+                    open: function() {
+                        $(this).dialog('option', 'position', {
+                            my: 'center',
+                            at: 'center',
+                            of: window
+                        });
+
+                        const closeBtn = $(this).parent().find('.ui-dialog-titlebar-close');
+                        if (closeBtn.length && closeBtn.html().trim() === '') {
+                            closeBtn.html(`
+                                <span class="ui-button-icon ui-icon ui-icon-closethick"></span>
+                                <span class="ui-button-icon-space"> </span>
+                            `);
+                        }
+                    }
+                });
+            }
+        
+            async function initSubmit() {
+                $('#submit').click(function() {
+                    const name = $('#name').val().trim();
+                    const noOfStocks = $('#noOfStocks').val();
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const by = urlParams.get('by');
+                    const instruments = inputTable.rows().data().toArray().map(row => {
+                        return {
+                            ticker: row.ticker,
+                            stocksOwned: row.stocksOwned,
+                            avgPrice: row.avgPrice
+                        };
+                    });
+                    const data = {
+                        by: by,
+                        name: name,
+                        noOfStocks: noOfStocks,
+                        source: 'new',
+                        instruments: instruments
+                    };
+                    const jsonString = JSON.stringify(data, null, 4);
+                    const uniqueId = crypto.randomUUID();
+                    sessionStorage.setItem(uniqueId, jsonString);
+                    setTimeout(() => {
+                        window.location.href = `${getRootPath()}stocks/pies/report.html?id=${uniqueId}`
+                    }, 500);
+                });
+            }
+
+            async function initDownload() {
+                $('#download').click(function() {
+                    const name = $('#name').val().trim();
+                    const noOfStocks = $('#noOfStocks').val();
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const by = urlParams.get('by');
+                    const instruments = inputTable.rows().data().toArray().map(row => {
+                        return {
+                            ticker: row.ticker,
+                            stocksOwned: row.stocksOwned,
+                            avgPrice: row.avgPrice
+                        };
+                    });
+                    const data = {
+                        by: by,
+                        name: name,
+                        noOfStocks: noOfStocks,
+                        instruments: instruments
+                    };
+                    const jsonString = JSON.stringify(data, null, 4);
+                    const blob = new Blob([jsonString], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    const filename = `${name}.json`;
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
             }
         </script>
     </body>
