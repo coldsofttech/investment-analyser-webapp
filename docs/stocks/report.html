@@ -48,6 +48,7 @@
             <div id="investment-placeholder"></div>
             <div id="recommendations-placeholder"></div>
             <div id="companyinfo-placeholder"></div>
+            <div id="riskfactor-placeholder"></div>
             <div id="historicalperformance-placeholder" class="pt-sm-2"></div>
             <div id="stockchart-placeholder" class="pt-sm-2"></div>
             <div id="futureperformance-placeholder" class="pt-sm-2"></div>
@@ -119,14 +120,6 @@
                 } finally {
                     $('#loading-overlay').hide();
                 }
-            });
-
-            window.addEventListener('beforeprint', () => {
-                document.body.classList.add('force-desktop');
-            });
-
-            window.addEventListener('afterprint', () => {
-                document.body.classList.remove('force-desktop');
             });
 
             async function initPage() {
@@ -208,6 +201,9 @@
                         analyserObject.recommendations
                     ),
                     await showRiskProfile(
+                        analyserObject.riskProfile
+                    ),
+                    await showRiskFactors(
                         analyserObject.riskProfile
                     ),
                     await showLineChart(
@@ -363,6 +359,22 @@
                     eventName: 'riskProfileReady',
                     detail: {
                         data: data
+                    }
+                });
+            }
+
+            async function showRiskFactors(data) {
+                await loadFragmentAndDispatch({
+                    selector: '#riskfactor-placeholder',
+                    url: '../public/stocks/risk-factors.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'riskFactorsReady',
+                    detail: {
+                        beta: data?.riskProfile?.beta,
+                        marketCap: data?.riskProfile?.marketCap,
+                        maxDrawdown: data?.riskProfile?.maxDrawdown,
+                        sharpeRatio: data?.riskProfile?.sharpeRatio,
+                        volatility: data?.riskProfile?.volatility
                     }
                 });
             }

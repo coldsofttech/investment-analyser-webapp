@@ -213,6 +213,22 @@ input::placeholder {
     box-shadow: var(--shadow-sm);
 }
 
+.details-list li.low {
+    border-left: 4px solid green;
+}
+
+.details-list li.medium {
+    border-left: 4px solid orange;
+}
+
+.details-list li.high {
+    border-left: 4px solid red;
+}
+
+.details-list li.very-high {
+    border-left: 4px solid red;
+}
+
 div.dt-container div.dt-layout-row {
     margin: 0 !important;
 }
