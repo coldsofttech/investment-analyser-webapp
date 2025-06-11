@@ -145,12 +145,14 @@
                     await tickerObject.init();
 
                     analyserObject = new StockAnalyser(
+                        tickerObject.tickerCode,
                         tickerObject.companyInfo,
                         tickerObject.stockData,
                         tickerObject.dividends,
                         tickerObject.fxRate,
                         stocksOwned,
-                        avgPrice
+                        avgPrice,
+                        tickerObject.priceInfo?.currentPrice
                     );
                 } catch (err) {
                     return displayError(err.message, true, errorRedirectionUrl);

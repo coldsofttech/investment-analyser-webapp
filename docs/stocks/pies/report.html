@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Investment Analyser - Pie</title>
+
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" 
+              integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+        <link rel="stylesheet" href="https://cdn.datatables.net/2.3.1/css/dataTables.dataTables.min.css">
+        <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.4/css/responsive.dataTables.min.css">
+        <link href="../../static/css/styles.css" rel="stylesheet">
+
+        <style>
+            #companyTableMobileView,
+            #historyTableMobileView,
+            #forecastTableMobileView,
+            #recomAndRiskProfileTableMobileView {
+                display: none;
+            }
+
+            @media (max-width: 768px) {
+                #companyTableDesktopView,
+                #historyTableDesktopView,
+                #forecastTableDesktopView,
+                #recomAndRiskProfileTableDesktopView {
+                    display: none;
+                }
+
+                #companyTableMobileView,
+                #historyTableMobileView,
+                #forecastTableMobileView,
+                #recomAndRiskProfileTableMobileView {
+                    display: block;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div id="loading-placeholder"></div>
+        <div id="scrolltotop-placeholder"></div>
+        <div class="container">
+            <div class="freeze-pane">
+                <div id="userbar-placeholder"></div>
+                <div id="header-placeholder"></div>
+                <div id="riskprofile-placeholder"></div>
+            </div>
+            <div id="error-placeholder"></div>
+            <div id="menu-placeholder"></div>
+            <div id="investment-placeholder"></div>
+            <div id="recommendations-placeholder"></div>
+            <div id="companyinfo-placeholder"></div>
+            <div id="riskfactor-placeholder"></div>
+            <div id="distribution-placeholder"></div>
+            <div id="historicalperformance-placeholder" class="pt-sm-2"></div>
+            <div id="stockchart-placeholder" class="pt-sm-2"></div>
+            <div id="futureperformance-placeholder" class="pt-sm-2"></div>
+            <div id="recomandriskprofile-placeholder" class="pt-sm-2"></div>
+        </div>
+        <div id="keyterminology-placeholder"></div>
+
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js" 
+                integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" 
+                crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" 
+                integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" 
+                crossorigin="anonymous"></script>
+        <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+        <script src="https://cdn.datatables.net/2.3.1/js/dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/responsive/3.0.4/js/dataTables.responsive.min.js"></script>
+        <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+        <script src="../../static/js/utils.js"></script>
+        <script src="../../static/js/auth0.js"></script>
+        <script src="../../static/js/currency.js"></script>
+        <script src="../../static/js/stocks/indexdb.js"></script>
+        <script src="../../static/js/stocks/exchange.js"></script>
+        <script src="../../static/js/stocks/renders.js"></script>
+        <script src="../../static/js/stocks/ticker.js"></script>
+        <script src="../../static/js/stocks/analyser.js"></script>
+
+        <script>
+            $(async function() {
+                const htmlFragments = [
+                    {
+                        selector: '#loading-placeholder',
+                        url: '../../public/loading.html',
+                        eventType: 'CustomEvent',
+                        eventName: 'loadingOverlayReady',
+                        detail: {
+                            message: 'Your awesome "Pie Analysis" report is loading. Hang tight! If it takes too long, just refresh the page...'
+                        }
+                    },
+                    {
+                        selector: '#error-placeholder',
+                        url: '../../public/error.html',
+                        eventName: 'errorReady'
+                    },
+                    {
+                        selector: '#userbar-placeholder',
+                        url: '../../public/user-bar.html',
+                        eventName: 'userBarReady'
+                    },
+                    {
+                        selector: '#menu-placeholder',
+                        url: '../../public/menu.html',
+                        eventName: 'menuReady'
+                    },
+                    {
+                        selector: '#scrolltotop-placeholder',
+                        url: '../../public/scroll-to-top.html',
+                        eventName: 'scrollToTopReady'
+                    }
+                ];
+
+                await loadFragmentAndDispatch(htmlFragments[0]);
+                $('#loading-overlay').show();
+
+                try {
+                    await loadAllFragments(htmlFragments.slice(1));
+                    await initPage();
+                } catch (err) {
+                    console.warn(err);
+                } finally {
+                    $('#loading-overlay').hide();
+                }
+            });
+
+            async function initPage() {
+                const { urlParams, id } = await parseParams();
+                const { by, name, source, instruments } = await parseInput(id);
+                let errorRedirectionUrl = null;
+
+                if (source === 'new') {
+                    errorRedirectionUrl = `${getRootPath()}stocks/pies/input.html?${decodeURIComponent(urlParams.toString())}`;
+                } else {
+                    errorRedirectionUrl = `${getRootPath()}stocks/pies/report.html?${decodeURIComponent(urlParams.toString())}`;
+                }
+
+                if (!name) {
+                    return displayError('Missing Pie name.', true, errorRedirectionUrl);
+                }
+
+                if (!instruments && instruments.length < 1) {
+                    return displayError('Minimum of one instrument is required in the pie.', true, errorRedirectionUrl);
+                }
+
+                const defaultCurrency = await parseDefaultCurrency();
+                if (!defaultCurrency) {
+                    return displayError('Unable to retrieve the default currency.', true, errorRedirectionUrl);
+                }
+
+                let tickerObjects = [];
+                let analyserObject = null;
+                let netValue = 0, currentValue = 0, netGrowth = 0, avgPrice = 0;
+
+                for (const item of instruments) {
+                    let tObj = null;
+
+                    try {
+                        tObj = new Ticker(item.ticker, defaultCurrency, item.stocksOwned, item.avgPrice);
+                        await tObj.init();
+                    } catch (err) {
+                        return displayError(err.message, true, errorRedirectionUrl);
+                    }
+
+                    if (tObj.error) {
+                        return displayError(tObj.error.message, true, errorRedirectionUrl);
+                    }
+
+                    tickerObjects.push(tObj);
+                }
+
+                try {
+                    const { net, current, growth } = await calculateInvestment(tickerObjects);
+                    netValue = net;
+                    currentValue = current;
+                    netGrowth = growth;
+                    avgPrice = tickerObjects.reduce((sum, s) => sum + parseFloat(s.avgPrice), 0);
+
+                    analyserObject = new PieAnalyser(tickerObjects, netValue);
+                } catch (err) {
+                    return displayError(tObj.error.message, true, errorRedirectionUrl);
+                }
+
+                await Promise.all([
+                    await showPieName(
+                        name
+                    ),
+                    await showCompanyInfo(
+                        analyserObject.analysers,
+                        defaultCurrency
+                    ),
+                    await showInvestmentInfo(
+                        netValue,
+                        currentValue,
+                        netGrowth,
+                        defaultCurrency
+                    ),
+                    await showFXRateFooter(
+                        defaultCurrency.currency,
+                        tickerObjects.map(t => t.companyInfo?.currency),
+                        tickerObjects.map(t => t.fxRate)
+                    ),
+                    await showHistoricalPerformance(
+                        analyserObject.historicalPerformance
+                    ),
+                    await showFutureForecast(
+                        analyserObject.futureForecast,
+                        avgPrice,
+                        defaultCurrency
+                    ),
+                    await showRecommendations(
+                        analyserObject.recommendations
+                    ),
+                    await showRiskProfile(
+                        analyserObject.riskProfile
+                    ),
+                    await showRiskFactors(
+                        analyserObject.riskProfile
+                    ),
+                    await showRecommendationsAndRiskProfile(
+                        analyserObject.recommendations?.recommendations,
+                        analyserObject.riskProfile?.tickers
+                    ),
+                    await showPieDistribution(
+                        analyserObject.analysers,
+                        defaultCurrency
+                    ),
+                    await showLineChart(
+                        analyserObject.analysers,
+                        defaultCurrency
+                    )
+                ]);
+            }
+
+            async function parseParams() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const id = urlParams.get('id');
+
+                return { urlParams, id };
+            }
+
+            async function parseInput(id) {
+                const data = JSON.parse(sessionStorage.getItem(id));
+                const by = data.by;
+                const name = data.name;
+                const source = data.source;
+                const instruments = data.instruments;
+
+                return { by, name, source, instruments };
+            }
+
+            async function parseDefaultCurrency() {
+                let defaultCurrency;
+
+                if (!defaultCurrency) {
+                    defaultCurrency = getCurrency(localStorage.getItem('defaultCurrency'));
+                }
+
+                if (defaultCurrency.currency === 'Unknown') {
+                    defaultCurrency = getCurrency('GBP');
+                }
+
+                return defaultCurrency;
+            }
+
+            async function calculateInvestment(tickers) {
+                let net = 0, current = 0, growth = 0;
+
+                for (const ticker of tickers) {
+                    const lastPrice = ticker?.priceInfo?.currentPrice * ticker?.fxRate;
+                    net += parseFloat(ticker?.stocksOwned * ticker?.avgPrice);
+                    current += parseFloat(ticker?.stocksOwned * lastPrice);
+                }
+
+                growth = parseFloat(((current - net) / net) * 100);
+
+                return { net, current, growth };
+            }
+
+            async function showPieName(name) {
+                await loadFragmentAndDispatch({
+                    selector: '#header-placeholder',
+                    url: '../../public/header.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'headerReady',
+                    detail: {
+                        title: name,
+                        logo: ''
+                    }
+                });
+            }
+
+            async function showCompanyInfo(data, defaultCurrency) {
+                await loadFragmentAndDispatch({
+                    selector: '#companyinfo-placeholder',
+                    url: '../../public/stocks/company-info.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'companyInfoReady',
+                    detail: {
+                        pie: true,
+                        data: data,
+                        defaultCurrency: defaultCurrency
+                    }
+                });
+            }
+        
+            async function showInvestmentInfo(net, current, growth, defaultCurrency) {
+                await loadFragmentAndDispatch({
+                    selector: '#investment-placeholder',
+                    url: '../../public/stocks/investment-info.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'investmentInfoReady',
+                    detail: {
+                        pie: true,
+                        net: net,
+                        current: current,
+                        growth: growth,
+                        defaultCurrency: defaultCurrency
+                    }
+                });
+            }
+
+            async function showFXRateFooter(to, fromList, convRates) {
+                await loadFragmentAndDispatch({
+                    selector: '#keyterminology-placeholder',
+                    url: '../../public/stocks/key-terminology.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'keyTerminologyReady',
+                    detail: {
+                        to: to,
+                        fromList: fromList,
+                        convRates: convRates
+                    }
+                });
+            }
+
+            async function showHistoricalPerformance(data) {
+                await loadFragmentAndDispatch({
+                    selector: '#historicalperformance-placeholder',
+                    url: '../../public/stocks/history-info.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'historicalPerformanceReady',
+                    detail: {
+                        data: data
+                    }
+                });
+            }
+
+            async function showFutureForecast(data, avgPrice, defaultCurrency) {
+                await loadFragmentAndDispatch({
+                    selector: '#futureperformance-placeholder',
+                    url: '../../public/stocks/future-info.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'futureForecastReady',
+                    detail: {
+                        pie: true,
+                        data: data,
+                        avgPrice: avgPrice,
+                        defaultCurrency: defaultCurrency
+                    }
+                });
+            }
+
+            async function showRecommendations(data) {
+                await loadFragmentAndDispatch({
+                    selector: '#recommendations-placeholder',
+                    url: '../../public/stocks/recommendations.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'recommendationsReady',
+                    detail: {
+                        shortTerm: data?.shortTerm,
+                        longTerm: data?.longTerm
+                    }
+                });
+            }
+
+            async function showRiskProfile(data) {
+                await loadFragmentAndDispatch({
+                    selector: '#riskprofile-placeholder',
+                    url: '../../public/stocks/risk-profile.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'riskProfileReady',
+                    detail: {
+                        data: data
+                    }
+                });
+            }
+
+            async function showRiskFactors(data) {
+                await loadFragmentAndDispatch({
+                    selector: '#riskfactor-placeholder',
+                    url: '../../public/stocks/risk-factors.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'riskFactorsReady',
+                    detail: {
+                        beta: data?.riskProfile?.beta,
+                        marketCap: data?.riskProfile?.marketCap,
+                        maxDrawdown: data?.riskProfile?.maxDrawdown,
+                        sharpeRatio: data?.riskProfile?.sharpeRatio,
+                        volatility: data?.riskProfile?.volatility
+                    }
+                });
+            }
+
+            async function showRecommendationsAndRiskProfile(recommendations, risks) {
+                await loadFragmentAndDispatch({
+                    selector: '#recomandriskprofile-placeholder',
+                    url: '../../public/stocks/recom-and-risk-profile.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'recomAndRiskProfileReady',
+                    detail: {
+                        recommendations: recommendations,
+                        risks: risks
+                    }
+                });
+            }
+
+            async function getPieChartDataForTicker(data, defaultCurrency) {
+                let labels = [], values = [], hoverTexts = [];
+
+                data.forEach(async (stock) => {
+                    const investment = parseFloat(stock.stocksOwned * stock.avgPrice);
+                    if (investment > 0) {
+                        labels.push(stock.tickerCode);
+                        values.push(investment);
+                        hoverTexts.push(`${stock.tickerCode}: ${await formatCurrency(investment, defaultCurrency)}`);
+                    }
+                });
+
+                return {
+                    labels: labels,
+                    values: values,
+                    hoverTexts: hoverTexts
+                };
+            }
+
+            async function getPieChartDataForAttribute(data, attr, defaultCurrency) {
+                let labelMap = {};
+
+                data.forEach(async (stock) => {
+                    const investment = parseFloat(stock.stocksOwned * stock.avgPrice);
+                    if (investment > 0) {
+                        const label = stock.info[attr];
+                        labelMap[label] = (labelMap[label] || 0) + investment;
+                    }
+                });
+
+                let labels = [], values = [], hoverTexts = [];
+
+                for (const [label, totalInvestment] of Object.entries(labelMap)) {
+                    labels.push(label);
+                    values.push(totalInvestment);
+                    hoverTexts.push(`${label}: ${await formatCurrency(totalInvestment, defaultCurrency)}`);
+                }
+
+                return {
+                    labels: labels,
+                    values: values,
+                    hoverTexts: hoverTexts
+                };
+            }
+
+            async function showPieDistribution(analysers, defaultCurrency) {
+                const tickers = await getPieChartDataForTicker(analysers, defaultCurrency);
+                const industries = await getPieChartDataForAttribute(analysers, 'industry', defaultCurrency);
+                const sectors = await getPieChartDataForAttribute(analysers, 'sector', defaultCurrency);
+                const exchanges = await getPieChartDataForAttribute(analysers, 'exchange', defaultCurrency);
+
+                await loadFragmentAndDispatch({
+                    selector: '#distribution-placeholder',
+                    url: '../../public/stocks/distribution.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'distributionReady',
+                    detail: {
+                        tabs: [
+                            {
+                                id: 'byInvestment-chart',
+                                title: 'By Investment',
+                                data: tickers
+                            },
+                            {
+                                id: 'byIndustry-chart',
+                                title: 'By Industry',
+                                data: industries
+                            },
+                            {
+                                id: 'bySector-chart',
+                                title: 'By Sector',
+                                data: sectors
+                            },
+                            {
+                                id: 'byExchange-chart',
+                                title: 'By Exchange',
+                                data: exchanges
+                            }
+                        ]
+                    }
+                });
+            }
+        
+            async function showLineChart(data, defaultCurrency) {
+                let series = [];
+
+                data.forEach((entry, idx) => {
+                    const dates = entry.data.map(i => i.date);
+                    const prices = entry.data.map(i => i.price);
+                    const fxRate = entry.fxRate;
+                    const color = colorPalette[idx % colorPalette.length];
+                    series.push({
+                        dates: dates,
+                        values: prices,
+                        label: entry.tickerCode,
+                        fxRate: fxRate,
+                        color: color
+                    });
+                });
+
+                const chartData = {
+                    series: series
+                };
+
+                if (avgPrice > 0) {
+                    chartData.avgLine = { value: parseFloat(avgPrice) };
+                }
+
+                await loadFragmentAndDispatch({
+                    selector: '#stockchart-placeholder',
+                    url: '../../public/stocks/stock-chart.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'lineChartReady',
+                    detail: {
+                        data: chartData,
+                        title: 'Historical Data',
+                        currency: defaultCurrency.currency,
+                        showLegend: false
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>

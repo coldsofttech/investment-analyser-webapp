@@ -7,6 +7,16 @@ function isMobileView() {
     return window.innerWidth < 768;
 }
 
+async function toCamelCase(str) {
+    return str
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-zA-Z0-9 ]/g, '')
+        .split(/\s+/)
+        .map((word, i) => i === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1))
+        .join('');
+}
+
 async function loadFragmentAndDispatch({
     selector,
     url,
@@ -76,7 +86,7 @@ async function formatPercentage(value) {
 }
 
 async function truncWebsite(domain) {
-    return domain.replace(/^https?:\/\/(www\.)?/, '');
+    return domain ? domain.replace(/^https?:\/\/(www\.)?/, '') : '';
 }
 
 async function loadError() {

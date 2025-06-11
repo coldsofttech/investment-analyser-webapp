@@ -25,6 +25,7 @@
 
 <script>
     document.addEventListener('futureForecastReady', async function(event) {
+        const pie = event.detail?.pie || false;
         const data = event.detail?.data;
         const avgPrice = event.detail?.avgPrice;
         const defaultCurrency = event.detail?.defaultCurrency;
@@ -63,7 +64,9 @@
             data: processedData,
             columns: columns,
             rightAlignColumns: [2, 3, 4, 5, 6, 7, 8],
-            hiddenColumns: avgPrice > 0 ? [0] : [0, 7, 8]
+            hiddenColumns: avgPrice > 0
+                ? (pie ? [0, 2] : [0])
+                : [0, 7, 8] 
         });
 
         await renderDataTableMobileView({
@@ -71,7 +74,9 @@
             data: processedData,
             columns: columns,
             titleFields: ['period', 'totalReturnsCagrFormatted'],
-            hiddenFields: avgPrice > 0 ? ['index'] : ['index', 'priceReturnGrowthFormatted', 'totalReturnsFormatted']
+            hiddenFields: avgPrice > 0
+                ? (pie ? ['index', 'forecastPriceFormatted'] : ['index'])
+                : ['index', 'priceReturnGrowthFormatted', 'totalReturnsFormatted']
         });
     });
 </script>

@@ -1,3 +1,12 @@
+const colorPalette = [
+    '#3498DB', '#E74C3C', '#2ECC71', '#F39C12', '#9B59B6', '#1ABC9C', '#34495E', '#16A085', '#D35400', '#8E44AD', 
+    '#F1C40F', '#D5DBDB', '#27AE60', '#BDC3C7', '#F39C12', '#FF6347', '#DA70D6', '#2E8B57', '#C71585', '#FFD700', 
+    '#20B2AA', '#DC143C', '#FF1493', '#FF8C00', '#B8860B', '#556B2F', '#8B008B', '#D2691E', '#A52A2A', '#6A5ACD', 
+    '#FF4500', '#E0FFFF', '#B0E0E6', '#ADFF2F', '#FF00FF', '#A9A9A9', '#808000', '#800000', '#B0C4DE', '#C0C0C0', 
+    '#000080', '#A52A2A', '#D3D3D3', '#FF6347', '#EE82EE', '#FAFAD2', '#F5FFFA', '#808080', '#F0E68C', '#98FB98', 
+    '#FF7F50', '#8B0000', '#800080', '#00FA9A', '#B0E0E6', '#E6E6FA', '#DCDCDC'
+];
+
 async function renderLogo(domain) {
     if (!domain) return '/static/img/default-logo.png';
 
@@ -75,6 +84,7 @@ async function renderDataTable({
     lengthChange = false,
     info = false,
     autoWidth = true,
+    scrollX = false,
     additionalOptions = {}
 }) {
     return $(selector).DataTable({
@@ -85,6 +95,7 @@ async function renderDataTable({
         lengthChange,
         info,
         autoWidth,
+        scrollX,
         destroy: true,
         columnDefs: [
             { targets: '_all', orderable: sortable === true },
@@ -203,6 +214,39 @@ async function renderLineChart({
         type: isLogScale ? 'log' : 'linear',
         tickformat: ',.2r'
     };
+
+    return Plotly.newPlot(chartId, plotData, layout, { responsive: true });
+}
+
+async function renderPieChart({
+    chartId,
+    chartTitle = '',
+    data = {},
+    showLegend = true,
+    legendPosition = 'outside'
+}) {
+    const layout = {
+        title: chartTitle,
+        titlefont: { size: 20, color: '#2C3E50' },
+        plot_bgcolor: '#FFFFFF',
+        paper_bgcolor: '#F2F6F9',
+        font: { family: 'Segoe UI', color: '#333' },
+        margin: { l: 40, r: 20, t: 60, b: 80 },
+        hovermode: 'x unified',
+        showlegend: showLegend
+    };
+
+    const plotData = [{
+        type: 'pie',
+        labels: data.labels,
+        values: data.values,
+        text: data.hoverTexts,
+        hoverinfo: 'text',
+        hole: 0.5,
+        textinfo: 'label+percent',
+        textposition: legendPosition,
+        marker: { line: { width: 1, color: '#FFFFFF' } }
+    }];
 
     return Plotly.newPlot(chartId, plotData, layout, { responsive: true });
 }

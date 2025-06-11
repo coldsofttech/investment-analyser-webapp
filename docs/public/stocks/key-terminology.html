@@ -27,12 +27,17 @@
             instead of the actual stock currenc${fromList > 1 ? "ies" : "y"}: 
         `;
         let stockCurrencies = [];
+        const seen = new Set();
 
         for (let i = 0; i < fromList.length ; i++) {
-            if (fromList[i] !== to) {
+            const currency = fromList[i];
+            const rate = convRates[i];
+
+            if (currency !== to && !seen.has(currency)) {
+                seen.add(currency);
                 stockCurrencies.push(`
-                    <strong>${fromList[i]}</strong> 
-                    (Conversion Rate: <strong>~${parseFloat(convRates[i]).toFixed(4)}</strong>)
+                    <strong>${currency}</strong> 
+                    (Conversion Rate: <strong>~${parseFloat(rate).toFixed(4)}</strong>)
                 `);
             }
         }
