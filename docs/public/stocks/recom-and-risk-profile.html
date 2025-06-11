@@ -1,0 +1,65 @@
+<h2 class="title">
+    <i class="bi bi-lightbulb me-md-0 me-0"></i>
+    Recommendations & Risks
+</h2>
+<div class="row">
+    <div id="recomAndRiskProfileTableDesktopView">
+        <table id="recomAndRiskProfileTable" class="display dataTable">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Short Term</th>
+                    <th>Long Term</th>
+                    <th>Risk</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div id="recomAndRiskProfileTableMobileView" class="accordion"></div>
+</div>
+
+<script>
+    document.addEventListener('recomAndRiskProfileReady', async function(event) {
+        const detail = event.detail || {};
+        const recommendations = detail.recommendations;
+        const risks = detail.risks;
+
+        const getRisk = (ticker) => {
+            const items = risks.filter(t => t.ticker === ticker);
+            if (items.length > 0) {
+                return items[0].riskProfile?.overallRisk;
+            } else {
+                return;
+            }
+        }
+
+        const processedData = await Promise.all(recommendations.map(async (row) => {
+            return {
+                ticker: `<span>${row.ticker}</span>`,
+                shortTerm: `<span>${row.shortTerm?.comments}</span>`,
+                longTerm: `<span>${row.longTerm?.comments}</span>`,
+                risk: `<span>${getRisk(row.ticker)}</span>`
+            };
+        }));
+
+        const columns = [
+            { data: 'ticker', title: 'Ticker' },
+            { data: 'shortTerm', title: 'Short Term' },
+            { data: 'longTerm', title: 'Long Term' },
+            { data: 'risk', title: 'Risk' },
+        ];
+
+        await renderDataTable({
+            selector: $('#recomAndRiskProfileTable'),
+            data: processedData,
+            columns: columns
+        });
+
+        await renderDataTableMobileView({
+            elementId: '#recomAndRiskProfileTableMobileView',
+            data: processedData,
+            columns: columns,
+            titleFields: ['ticker', 'risk'],
+        });
+    });
+</script>
