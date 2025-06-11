@@ -11,8 +11,9 @@
     let chartTitle = null;
     let chartCurrency = null;
     let chartShowLegend = false;
+    let chartLogScale = false;
 
-    async function renderResponsiveChart() {
+    async function renderResponsiveLineChart() {
         if (!chartData) {
             return;
         }
@@ -22,6 +23,7 @@
             chartTitle: chartTitle,
             data: chartData,
             currency: chartCurrency,
+            isLogScale: chartLogScale,
             showLegend: chartShowLegend,
             showRangeSlider: !isMobileView()
         });
@@ -33,10 +35,15 @@
         chartCurrency = event.detail?.currency || '';
         chartShowLegend = event.detail?.showLegend || false;
 
-        await renderResponsiveChart();
+        if (chartData.series.length > 1) {
+            chartShowLegend = true;
+            chartLogScale = true;
+        }
+
+        await renderResponsiveLineChart();
     });
 
     window.addEventListener('resize', () => {
-        renderResponsiveChart();
+        renderResponsiveLineChart();
     });
 </script>
