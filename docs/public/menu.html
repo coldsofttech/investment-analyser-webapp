@@ -22,13 +22,11 @@
                             </a>
                         </li>
                         <li>
-                            <a id="nav-pies-new-stocks-owned" class="dropdown-item" href="#"><span class="padding-extra">New Pie (by Stocks Owned)</span></a>
+                            <a id="nav-pies-new" class="dropdown-item" href="#"><span class="padding-extra">New Pie</span></a>
                         </li>
                         <li>
-                            <a id="nav-pies-new-percentage" class="dropdown-item" href="#"><span class="padding-extra">New Pie (by Percentage)</span></a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#"><span class="padding-extra">Load Pie</span></a>
+                            <a id="nav-pies-load" class="dropdown-item" href="#"><span class="padding-extra">Load Pie</span></a>
+                            <input type="file" id="nav-pies-load-file" accept=".json" class="d-none" />
                         </li>
                     </ul>
                 </li>
@@ -43,12 +41,36 @@
         const links = {
             'nav-menu': 'menu.html',
             'nav-stocks-input': 'stocks/input.html',
-            'nav-pies-new-stocks-owned': 'stocks/pies/input.html?by=StocksOwned',
-            'nav-pies-new-percentage': 'stocks/pies/input.html?by=Percentage'
+            'nav-pies-new': 'stocks/pies/input.html'
         };
 
         for (const [id, path] of Object.entries(links)) {
             $(`#${id}`).attr('href', `${appRootPath}${path}`);
         }
+
+        $('#nav-pies-load').on('click', function(e) {
+            e.preventDefault();
+            $('#nav-pies-load-file').click();
+        });
+
+        $('#nav-pies-load-file').on('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.name.endsWith('.json')) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    try {
+                        const uniqueId = crypto.randomUUID();
+                        sessionStorage.setItem(uniqueId, evt.target.result);
+                        setTimeout(() => {
+                            window.location.href = `${getRootPath()}stocks/pies/report.html?id=${uniqueId}`
+                        }, 500);
+                    } catch(err) {
+                        displayError(err.message);
+                    }
+                };
+
+                reader.readAsText(file);
+            }
+        });
     });
 </script>
