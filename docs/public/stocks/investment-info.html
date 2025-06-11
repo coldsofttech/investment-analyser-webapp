@@ -12,42 +12,72 @@
 
 <script>
     document.addEventListener('investmentInfoReady', async function(event) {
-        const stocksOwned = event.detail?.stocksOwned;
-        const avgPrice = event.detail?.avgPrice;
-        const priceInfo = event.detail?.priceInfo;
-        const fxRate = event.detail?.fxRate;
-        const defaultCurrency = event.detail?.defaultCurrency;
-        const $investmentContainer = $('#investmentContainer');
+        const detail = event.detail || {};
+        const pie = detail.pie || false;
+        const $container = $('#investmentContainer');
+        const defaultCurrency = detail.defaultCurrency;
 
-        if (stocksOwned > 0) {
-            const netValue = stocksOwned * avgPrice;
-            const currentValue = stocksOwned * (priceInfo?.currentPrice * fxRate);
-            const growth = ((currentValue - netValue) / netValue) * 100;
-            const netContent = `
-                <div class="text-right">
-                    ${await formatCurrency(netValue, defaultCurrency)}<br>
-                    <i class="optional-text d-none d-md-inline">(${stocksOwned} * ${await formatCurrency(avgPrice, defaultCurrency)})</i>
-                </div>
-            `;
-            const currentContent = `
-                <div class="text-right">
-                    ${await formatCurrency(currentValue, defaultCurrency)}<br>
-                    <i class="optional-text d-none d-md-inline">(${stocksOwned} * ${await formatCurrency((priceInfo?.currentPrice * fxRate), defaultCurrency)})</i>
-                </div>
-            `;
-            const growthContent = `
-                <div class="text-right">
-                    ${await formatPercentage(growth)}<br>
-                    <i class="optional-text d-none d-md-inline">(${growth > 0 ? "Profit" : "Loss"}: ${await formatCurrency(currentValue - netValue, defaultCurrency)})</i>
-                </div>
-            `;
+        function getClassName(value, neutral = 'color-na') {
+            if (value === null || value === undefined) return neutral;
 
-            $('#investmentNet').html(netContent).attr('class', 'color-na');
-            $('#investmentCurrent').html(currentContent).attr('class', currentValue > netValue ? 'color-pos' : 'color-neg');
-            $('#investmentGrowth').html(growthContent).attr('class', growth > 0 ? 'color-pos' : 'color-neg');
-            $investmentContainer.show();
+            if (typeof value === 'number') {
+                if (value > 0) return 'color-pos';
+                if (value < 0) return 'color-neg';
+            }
+
+            return neutral;
+        }
+
+        if (!pie) {
+            const stocksOwned = parseFloat(detail.stocksOwned) || 0;
+            const avgPrice = parseFloat(detail.avgPrice) || 0;
+            const currentPrice = parseFloat(detail.priceInfo?.currentPrice) || 0;
+            const fxRate = parseFloat(detail.fxRate) || 1;
+
+            if (stocksOwned > 0 && avgPrice > 0 && currentPrice > 0) {
+                const netValue = stocksOwned * avgPrice;
+                const currentValue = stocksOwned * (currentPrice * fxRate);
+                const growth = ((currentValue - netValue) / netValue) * 100;
+                const profitLoss = currentValue - netValue;
+
+                const formatDetail = async (value, baseValue, multiplier) => `
+                    <div class="text-right">
+                        ${await value}
+                        <br>
+                        <i class="optional-text d-none d-md-inline">(${multiplier} * ${await baseValue})<i>
+                    </div>
+                `;
+
+                $('#investmentNet').html(
+                    await formatDetail(formatCurrency(netValue, defaultCurrency), formatCurrency(avgPrice, defaultCurrency), stocksOwned)
+                ).attr('class', 'color-na');
+                $('#investmentCurrent').html(
+                    await formatDetail(formatCurrency(currentValue, defaultCurrency), formatCurrency(currentPrice * fxRate, defaultCurrency), stocksOwned)
+                ).attr('class', getClassName(currentValue - netValue));
+
+                const growthContent = `
+                    <div class="text-right">
+                        ${await formatPercentage(growth)}
+                        <br>
+                        <i class="optional-text d-none d-md-inline">(${growth > 0 ? "Profit" : "Loss"}: ${await formatCurrency(profitLoss, defaultCurrency)})</i>
+                    </div>
+                `;
+                $('#investmentGrowth').html(growthContent).attr('class', getClassName(growth));
+
+                $container.show();
+            } else {
+                $container.hide();
+            }
         } else {
-            $investmentContainer.hide();
+            const net = parseFloat(detail.net) || 0;
+            const current = parseFloat(detail.current) || 0;
+            const growth = parseFloat(detail.growth) || 0;
+
+            $('#investmentNet').text(await formatCurrency(net, defaultCurrency)).attr('class', 'color-na');
+            $('#investmentCurrent').text(await formatCurrency(current, defaultCurrency)).attr('class', getClassName(current - net));
+            $('#investmentGrowth').text(await formatPercentage(growth)).attr('class', getClassName(growth));
+
+            $container.show();
         }
     });
 </script>
