@@ -48,13 +48,15 @@ function classifyRisk (value, thresholds) {
 }
 
 class StockAnalyser {
-    constructor(info, data, dividends, fxRate, stocksOwned, avgPrice) {
+    constructor(tickerCode, info, data, dividends, fxRate, stocksOwned, avgPrice, currentPrice) {
+        this.tickerCode = tickerCode;
         this.info = info;
         this.data = data;
         this.dividends = dividends;
         this.fxRate = fxRate;
         this.stocksOwned = stocksOwned;
         this.avgPrice = avgPrice;
+        this.currentPrice = currentPrice;
         this.historicalPerformance = this.getHistoricalPerformance();
         this.futureForecast = this.getFutureForecast();
         this.recommendations = this.getRecommendations();
@@ -373,6 +375,285 @@ class StockAnalyser {
         return {
             riskProfile: riskProfile,
             overallRisk: overallRisk
+        };
+    }
+}
+
+class PieAnalyser {
+    constructor(stocks, netDeposit) {
+        this.stocks = stocks;
+        this.netDeposit = netDeposit;
+        this.analysers = this.#analyseStocks();
+        this.historicalPerformance = this.getHistoricalPerformance();
+        this.futureForecast = this.getFutureForecast();
+        this.recommendations = this.getRecommendations();
+        this.riskProfile = this.getRiskProfile();
+    }
+
+    #weightedAvgCagrByPeriod(periods) {
+        let totalCagr = 0, totalWeight = 0;
+
+        this.analysers.forEach(a => {
+            if (!a.weight || a.weight === 0) {
+                return;
+            }
+
+            const matchingPeriods = a.historicalPerformance
+                .filter(h => periods.includes(h.period) && typeof h.cagr === 'number');
+            
+            if (matchingPeriods.length === 0) {
+                return;
+            }
+
+            const avgStockCagr = matchingPeriods.reduce((sum, h) => sum + h.cagr, 0) / matchingPeriods.length;
+            totalCagr += avgStockCagr * a.weight;
+            totalWeight += a.weight;
+        });
+
+        return totalWeight > 0 ? totalCagr / totalWeight : 0;
+    }
+
+    #weightedAvg(arr, weights) {
+        const { sum, weightSum } = arr.reduce((acc, val, i) => {
+            const w = weights[i];
+            if (typeof val === 'number' && !isNaN(val) && typeof w === 'number' && !isNaN(w)) {
+                acc.sum += (val * w);
+                acc.weightSum += w;
+            }
+
+            return acc;
+        }, { sum: 0, weightSum: 0 });
+
+        return weightSum > 0 ? sum / weightSum : NaN;
+    }
+
+    #analyseStocks() {
+        let analysers = [];
+
+        this.stocks.forEach(s => {
+            const analyser = new StockAnalyser(
+                s?.tickerCode,
+                s?.companyInfo,
+                s?.stockData,
+                s?.dividends,
+                s?.fxRate,
+                s?.stocksOwned,
+                s?.avgPrice,
+                s?.priceInfo?.currentPrice
+            );
+            analyser.weight = this.netDeposit > 0 ? (analyser.stocksOwned * analyser.avgPrice) / this.netDeposit : 0;
+
+            analysers.push(analyser);
+        });
+
+        return analysers;
+    }
+
+    getHistoricalPerformance() {
+        let records = [];
+        const periodData = {};
+
+        this.analysers.forEach(a => {
+            a.historicalPerformance.forEach(entry => {
+                const period = entry.period;
+                if (!periodData[period]) {
+                    periodData[period] = {
+                        growth: [], cagr: [], dividendCagr: [], totalReturnsCagr: []
+                    };
+                }
+
+                periodData[period].growth.push((entry.growth ?? 0) * a.weight);
+                periodData[period].cagr.push((entry.cagr ?? 0) * a.weight);
+                periodData[period].dividendCagr.push((entry.dividendCagr ?? 0) * a.weight);
+                periodData[period].totalReturnsCagr.push((entry.totalReturnsCagr ?? 0) * a.weight);
+            });
+        });
+
+        periods.forEach((period, idx) => {
+            const label = period.label;
+            if (!periodData[label]) {
+                return;
+            }
+
+            const growthAvg = periodData[label].growth.reduce((a, b) => a + b, 0);
+            const cagrAvg = periodData[label].cagr.reduce((a, b) => a + b, 0);
+            const divCagrAvg = periodData[label].dividendCagr.reduce((a, b) => a + b, 0);
+            const trCagrAvg = periodData[label].totalReturnsCagr.reduce((a, b) => a + b, 0);
+
+            records.push({
+                index: idx,
+                period: label,
+                growth: growthAvg,
+                cagr: cagrAvg,
+                dividendCagr: divCagrAvg,
+                totalReturnsCagr: trCagrAvg
+            });
+        });
+
+        return records;
+    }
+
+    getFutureForecast() {
+        let records = [];
+        const periodData = {};
+
+        this.analysers.forEach(a => {
+            a.futureForecast.forEach(entry => {
+                const period = entry.period;
+                if (!periodData[period]) {
+                    periodData[period] = {
+                        growth: [], forecastPrice: [], cagr: [], dividendCagr: [], 
+                        totalReturnsCagr: [], priceReturnGrowth: [], totalReturns: []
+                    };
+                }
+
+                periodData[period].growth.push((entry.growth ?? 0) * a.weight);
+                periodData[period].forecastPrice.push((entry.forecastPrice ?? 0) * a.stocksOwned);
+                periodData[period].cagr.push((entry.cagr ?? 0) * a.weight);
+                periodData[period].dividendCagr.push((entry.dividendCagr ?? 0) * a.weight);
+                periodData[period].totalReturnsCagr.push((entry.totalReturnsCagr ?? 0) * a.weight);
+                periodData[period].priceReturnGrowth.push((entry.priceReturnGrowth ?? 0) * a.weight);
+                periodData[period].totalReturns.push((entry.totalReturns ?? 0) * a.weight);
+            });
+        });
+
+        periods.forEach((period, idx) => {
+            if (period.months === null) {
+                return;
+            }
+
+            const label = period.label;
+            if (!periodData[label]) {
+                return;
+            }
+
+            const growthAvg = periodData[label].growth.reduce((a, b) => a + b, 0);
+            const forecastPriceAvg = periodData[label].forecastPrice.reduce((a, b) => a + b, 0);
+            const cagrAvg = periodData[label].cagr.reduce((a, b) => a + b, 0);
+            const divCagrAvg = periodData[label].dividendCagr.reduce((a, b) => a + b, 0);
+            const trCagrAvg = periodData[label].totalReturnsCagr.reduce((a, b) => a + b, 0);
+            const priceReturnAvg = periodData[label].priceReturnGrowth.reduce((a, b) => a + b, 0);
+            const trGrowthAvg = periodData[label].totalReturns.reduce((a, b) => a + b, 0);
+
+            records.push({
+                index: idx,
+                period: label,
+                growth: growthAvg,
+                forecastPrice: forecastPriceAvg,
+                cagr: cagrAvg,
+                dividendCagr: divCagrAvg,
+                totalReturnsCagr: trCagrAvg,
+                priceReturnGrowth: priceReturnAvg,
+                totalReturns: trGrowthAvg
+            });
+        });
+
+        return records;
+    }
+
+    getRecommendations() {
+        const shortTermCagr = this.#weightedAvgCagrByPeriod(['1 year', '2 years']);
+        const longTermCagr = this.#weightedAvgCagrByPeriod(['5 years', '10 years', '15 years', '20 years']);
+        const shortTermRecommendation = {
+            recommended: shortTermCagr && shortTermCagr >= 7,
+            cagr: shortTermCagr ? shortTermCagr : 0.0,
+            comments: shortTermCagr ? (
+                shortTermCagr >= 7 ? 'Recommended for short-term (1 to 2 years)' : 'Not recommended for short-term (1 to 2 years)'
+            ) : null,
+            risk: shortTermCagr ? classifyRisk(-shortTermCagr, [-10, -7, -4]) : 'Very High'
+        };
+        const longTermRecommendation = {
+            recommended: longTermCagr && longTermCagr >= 5,
+            cagr: longTermCagr ? longTermCagr : 0.0,
+            comments: longTermCagr ? (
+                longTermCagr >= 5 ? 'Recommended for long-term (5+ years)' : 'Not recommended for long-term (5+ years)'
+            ) : null,
+            risk: longTermCagr ? classifyRisk(-longTermCagr, [-8, -5, -3]) : 'Very High'
+        };
+
+        let recommendations = [];
+        this.analysers.forEach(a => {
+            const recs = a.recommendations;
+            recommendations.push({
+                ticker: a.tickerCode,
+                shortTerm: recs?.shortTerm,
+                longTerm: recs?.longTerm
+            });
+        });
+
+        return {
+            shortTerm: shortTermRecommendation,
+            longTerm: longTermRecommendation,
+            recommendations: recommendations
+        };
+    }
+
+    getRiskProfile() {
+        const volatilities = this.analysers.map(a => a?.info?.volatility);
+        const betas = this.analysers.map(a => a?.info?.beta);
+        const maxDrawdowns = this.analysers.map(a => a?.info?.maxDrawdown);
+        const sharpeRatios = this.analysers.map(a => a?.info?.sharpeRatio);
+        const marketCaps = this.analysers.map(a => a?.info?.marketCap * a?.fxRate);
+        const weights = this.analysers.map(a => a.weight);
+        
+        const volatilityAvg = this.#weightedAvg(volatilities, weights);
+        const betaAvg = this.#weightedAvg(betas, weights);
+        const maxDrawdownAvg = this.#weightedAvg(maxDrawdowns, weights);
+        const sharpeRatioAvg = this.#weightedAvg(sharpeRatios, weights);
+        const marketCapAvg = this.#weightedAvg(marketCaps, weights);
+
+        const riskProfile = {
+            volatility: {
+                value: volatilityAvg,
+                risk: classifyRisk(volatilityAvg, [0.15, 0.30, 0.45])
+            },
+            beta: {
+                value: betaAvg,
+                risk: classifyRisk(betaAvg, [0.5, 1.2, 1.5])
+            },
+            maxDrawdown: {
+                value: maxDrawdownAvg,
+                risk: classifyRisk(maxDrawdownAvg, [0.1, 0.3, 0.4])
+            },
+            sharpeRatio: {
+                value: sharpeRatioAvg,
+                risk: classifyRisk(sharpeRatioAvg, [1, 1.5, 2])
+            },
+            marketCap: {
+                value: marketCapAvg,
+                risk: classifyRisk(-marketCapAvg, [-200e9, -10e9, -2e9])
+            }
+        };
+
+        let overallRiskScore = 0;
+        this.analysers.forEach(a => {
+            const weight = a.weight;
+            const riskProfile = a.riskProfile?.riskProfile;
+            const avgRiskScore = (
+                riskLevelToScore(riskProfile.volatility.risk) + 
+                riskLevelToScore(riskProfile.beta.risk) +
+                riskLevelToScore(riskProfile.maxDrawdown.risk) +
+                riskLevelToScore(riskProfile.sharpeRatio.risk) +
+                riskLevelToScore(riskProfile.marketCap.risk)
+            ) / 5;
+
+            overallRiskScore += avgRiskScore * weight;
+        });
+        const overallRisk = getOverallRiskLabel(overallRiskScore);
+
+        let tickers = [];
+        this.analysers.forEach(a => {
+            const rProfile = a.riskProfile;
+            tickers.push({
+                ticker: a.tickerCode,
+                riskProfile: rProfile
+            });
+        });
+
+        return {
+            riskProfile: riskProfile,
+            overallRisk: overallRisk,
+            tickers: tickers
         };
     }
 }
