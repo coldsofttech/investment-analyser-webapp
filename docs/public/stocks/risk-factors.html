@@ -5,24 +5,39 @@
 <div class="row">
     <div class="col-md-6">
         <ul class="details-list">
-            <li class="d-flex justify-content-between" id="risk-beta-container">
-                <strong>Beta:</strong> <span id="risk-beta" class="text-right"></span>
+            <li class="d-flex justify-content-between d-none" id="risk-beta-container">
+                <strong>
+                    <i class="bi bi-speedometer2 me-md-0 me-0"></i> Beta:
+                </strong> 
+                <span id="risk-beta" class="text-right"></span>
             </li>
-            <li class="d-flex justify-content-between" id="risk-market-cap-container">
-                <strong>Market Cap:</strong> <span id="risk-market-cap" class="text-right"></span>
+            <li class="d-flex justify-content-between d-none" id="risk-market-cap-container">
+                <strong>
+                    <i class="bi bi-bank me-md-0 me-0"></i> Market Cap:
+                </strong> 
+                <span id="risk-market-cap" class="text-right"></span>
             </li>
-            <li class="d-flex justify-content-between" id="risk-max-drawdown-container">
-                <strong>Max Drawdown:</strong> <span id="risk-max-drawdown" class="text-right"></span>
+            <li class="d-flex justify-content-between d-none" id="risk-max-drawdown-container">
+                <strong>
+                    <i class="bi bi-thermometer me-md-0 me-0"></i> Max Drawdown:
+                </strong> 
+                <span id="risk-max-drawdown" class="text-right"></span>
             </li>
         </ul>
     </div>
     <div class="col-md-6">
         <ul class="details-list">
-            <li class="d-flex justify-content-between" id="risk-sharpe-ratio-container">
-                <strong>Sharpe Ratio:</strong> <span id="risk-sharpe-ratio" class="text-right"></span>
+            <li class="d-flex justify-content-between d-none" id="risk-sharpe-ratio-container">
+                <strong>
+                    <i class="bi bi-bullseye me-md-0 me-0"></i> Sharpe Ratio:
+                </strong> 
+                <span id="risk-sharpe-ratio" class="text-right"></span>
             </li>
-            <li class="d-flex justify-content-between" id="risk-volatility-container">
-                <strong>Volatility:</strong> <span id="risk-volatility" class="text-right"></span>
+            <li class="d-flex justify-content-between d-none" id="risk-volatility-container">
+                <strong>
+                    <i class="bi bi-activity me-md-0 me-0"></i> Volatility:
+                </strong> 
+                <span id="risk-volatility" class="text-right"></span>
             </li>
         </ul>
     </div>
@@ -30,28 +45,26 @@
 
 <script>
     document.addEventListener('riskFactorsReady', async function(event) {
-        const beta = event.detail?.beta;
-        const marketCap = event.detail?.marketCap;
-        const maxDrawdown = event.detail?.maxDrawdown;
-        const sharpeRatio = event.detail?.sharpeRatio;
-        const volatility = event.detail?.volatility;
+        const detail = event.detail || {};
+        const { beta, marketCap, maxDrawdown, sharpeRatio, volatility } = detail;
+
         const getClass = (val) => {
             return `d-flex justify-content-between ${val.replace(' ', '-').toLowerCase()}`;
         }
+        const setText = (id, conId, val) => {
+            if (val) {
+                $(`#${id}`).text(val);
+                $(`#${conId}`).attr('class', getClass(val));
+                document.getElementById(conId).classList.remove('d-none');
+            } else {
+                document.getElementById(conId).classList.add('d-none');
+            }
+        }
 
-        $('#risk-beta').text(beta.risk);
-        $('#risk-beta-container').attr('class', getClass(beta.risk));
-
-        $('#risk-market-cap').text(marketCap.risk);
-        $('#risk-market-cap-container').attr('class', getClass(marketCap.risk));
-
-        $('#risk-max-drawdown').text(maxDrawdown.risk);
-        $('#risk-max-drawdown-container').attr('class', getClass(maxDrawdown.risk));
-
-        $('#risk-sharpe-ratio').text(sharpeRatio.risk);
-        $('#risk-sharpe-ratio-container').attr('class', getClass(sharpeRatio.risk));
-
-        $('#risk-volatility').text(volatility.risk);
-        $('#risk-volatility-container').attr('class', getClass(volatility.risk));
+        setText('risk-beta', 'risk-beta-container', beta?.risk);
+        setText('risk-market-cap', 'risk-market-cap-container', marketCap?.risk);
+        setText('risk-max-drawdown', 'risk-max-drawdown-container', maxDrawdown?.risk);
+        setText('risk-sharpe-ratio', 'risk-sharpe-ratio-container', sharpeRatio?.risk);
+        setText('risk-volatility', 'risk-volatility-container', volatility?.risk);
     });
 </script>

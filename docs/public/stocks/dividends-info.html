@@ -1,20 +1,22 @@
-<h2 class="title">
-    <i class="bi bi-droplet-half me-md-0 me-0"></i>
-    Dividends
-</h2>
-<div class="row">
-    <div id="dividendsTableDesktopView">
-        <table id="dividendsTable" class="display dataTable">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th class="text-right">Amount <i>(per share)</i></th>
-                    <th class="text-right">Earnings</th>
-                </tr>
-            </thead>
-        </table>
+<div id="dividends" class="d-none">
+    <h2 class="title">
+        <i class="bi bi-droplet-half me-md-0 me-0"></i>
+        Dividends
+    </h2>
+    <div class="row">
+        <div id="dividendsTableDesktopView">
+            <table id="dividendsTable" class="display dataTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th class="text-right">Amount <i>(per share)</i></th>
+                        <th class="text-right">Earnings</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <div id="dividendsTableMobileView" class="accordion"></div>
     </div>
-    <div id="dividendsTableMobileView" class="accordion"></div>
 </div>
 
 <script>
@@ -24,6 +26,12 @@
         const fxRate = event.detail?.fxRate;
         const stocksOwned = event.detail?.stocksOwned;
         const defaultCurrency = event.detail?.defaultCurrency;
+
+        if (events?.dividends?.date && events?.dividends?.price) {
+            document.getElementById('dividends').classList.remove('d-none');
+        } else {
+            return document.getElementById('dividends').classList.add('d-none');
+        }
 
         const dividends = [];
         const addDividend = (date, price) => {

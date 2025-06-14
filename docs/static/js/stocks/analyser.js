@@ -341,40 +341,50 @@ class StockAnalyser {
     }
 
     getRiskProfile() {
-        const riskProfile = {
+        const metrics = {
             volatility: {
                 value: this.info?.volatility,
-                risk: classifyRisk(this.info?.volatility, [0.15, 0.30, 0.45])
+                thresholds: [0.15, 0.30, 0.45]
             },
             beta: {
                 value: this.info?.beta,
-                risk: classifyRisk(this.info?.beta, [0.5, 1.2, 1.5])
+                thresholds: [0.5, 1.2, 1.5]
             },
             maxDrawdown: {
                 value: this.info?.maxDrawdown,
-                risk: classifyRisk(this.info?.maxDrawdown, [0.1, 0.3, 0.4])
+                thresholds: [0.1, 0.3, 0.4]
             },
             sharpeRatio: {
                 value: this.info?.sharpeRatio,
-                risk: classifyRisk(this.info?.sharpeRatio, [1, 1.5, 2])
+                thresholds: [1, 1.5, 2]
             },
             marketCap: {
-                value: this.info?.marketCap * this.fxRate,
-                risk: classifyRisk(-this.info?.marketCap, [-200e9, -10e9, -2e9])
+                value: this.info?.marketCap ? this.info?.marketCap * this.fxRate : null,
+                thresholds: [-200e9, -10e9, -2e9],
+                invert: true
+            }
+        };
+
+        const riskProfile = {};
+        let totalScore = 0;
+        let count = 0;
+
+        for (const [key, { value, thresholds, invert }] of Object.entries(metrics)) {
+            if (value !== null && value !== undefined && !isNaN(value) && value !== '') {
+                const val = invert ? -value: value;
+                const risk = classifyRisk(val, thresholds);
+                riskProfile[key] = { value, risk };
+                totalScore += riskLevelToScore(risk);
+                count += 1;
             }
         }
-        const overallRiskScore = (
-            riskLevelToScore(riskProfile.volatility.risk) + 
-            riskLevelToScore(riskProfile.beta.risk) +
-            riskLevelToScore(riskProfile.maxDrawdown.risk) +
-            riskLevelToScore(riskProfile.sharpeRatio.risk) +
-            riskLevelToScore(riskProfile.marketCap.risk)
-        ) / 5;
-        const overallRisk = getOverallRiskLabel(overallRiskScore);
+
+        const overallRiskScore = count > 0 ? totalScore / count : null;
+        const overallRisk = overallRiskScore !== null ? getOverallRiskLabel(overallRiskScore) : 'N/A';
 
         return {
-            riskProfile: riskProfile,
-            overallRisk: overallRisk
+            riskProfile,
+            overallRisk
         };
     }
 }
@@ -593,67 +603,67 @@ class PieAnalyser {
         const betas = this.analysers.map(a => a?.info?.beta);
         const maxDrawdowns = this.analysers.map(a => a?.info?.maxDrawdown);
         const sharpeRatios = this.analysers.map(a => a?.info?.sharpeRatio);
-        const marketCaps = this.analysers.map(a => a?.info?.marketCap * a?.fxRate);
+        const marketCaps = this.analysers.map(a => {
+            const cap = a?.info?.marketCap;
+            return typeof cap === 'number' ? cap * a?.fxRate : null;
+        });
         const weights = this.analysers.map(a => a.weight);
-        
+
         const volatilityAvg = this.#weightedAvg(volatilities, weights);
         const betaAvg = this.#weightedAvg(betas, weights);
         const maxDrawdownAvg = this.#weightedAvg(maxDrawdowns, weights);
         const sharpeRatioAvg = this.#weightedAvg(sharpeRatios, weights);
         const marketCapAvg = this.#weightedAvg(marketCaps, weights);
 
-        const riskProfile = {
+        const riskProfile = {}
+        let totalScore = 0;
+        let count = 0;
+
+        const metrics = {
             volatility: {
                 value: volatilityAvg,
-                risk: classifyRisk(volatilityAvg, [0.15, 0.30, 0.45])
+                thresholds: [0.15, 0.30, 0.45]
             },
             beta: {
                 value: betaAvg,
-                risk: classifyRisk(betaAvg, [0.5, 1.2, 1.5])
+                thresholds: [0.5, 1.2, 1.5]
             },
             maxDrawdown: {
                 value: maxDrawdownAvg,
-                risk: classifyRisk(maxDrawdownAvg, [0.1, 0.3, 0.4])
+                thresholds: [0.1, 0.3, 0.4]
             },
             sharpeRatio: {
                 value: sharpeRatioAvg,
-                risk: classifyRisk(sharpeRatioAvg, [1, 1.5, 2])
+                thresholds: [1, 1.5, 2]
             },
             marketCap: {
                 value: marketCapAvg,
-                risk: classifyRisk(-marketCapAvg, [-200e9, -10e9, -2e9])
+                thresholds: [-200e9, -10e9, -2e9],
+                invert: true
             }
-        };
+        }
 
-        let overallRiskScore = 0;
-        this.analysers.forEach(a => {
-            const weight = a.weight;
-            const riskProfile = a.riskProfile?.riskProfile;
-            const avgRiskScore = (
-                riskLevelToScore(riskProfile.volatility.risk) + 
-                riskLevelToScore(riskProfile.beta.risk) +
-                riskLevelToScore(riskProfile.maxDrawdown.risk) +
-                riskLevelToScore(riskProfile.sharpeRatio.risk) +
-                riskLevelToScore(riskProfile.marketCap.risk)
-            ) / 5;
+        for (const [key, { value, thresholds, invert }] of Object.entries(metrics)) {
+            if (value !== null && value !== undefined && !isNaN(value) && value !== '') {
+                const val = invert ? -value : value;
+                const risk = classifyRisk(val, thresholds);
+                riskProfile[key] = { value, risk };
+                totalScore += riskLevelToScore(risk);
+                count += 1;
+            }
+        }
 
-            overallRiskScore += avgRiskScore * weight;
-        });
-        const overallRisk = getOverallRiskLabel(overallRiskScore);
-
-        let tickers = [];
-        this.analysers.forEach(a => {
-            const rProfile = a.riskProfile;
-            tickers.push({
-                ticker: a.tickerCode,
-                riskProfile: rProfile
-            });
-        });
+        const overallRiskScore = count > 0 ? totalScore / count : null;
+        const overallRisk = overallRiskScore !== null ? getOverallRiskLabel(overallRiskScore) : 'N/A';
+        const tickers = this.analysers.map(a => ({
+            ticker: a.tickerCode,
+            riskProfile: a.riskProfile
+        }));
 
         return {
-            riskProfile: riskProfile,
-            overallRisk: overallRisk,
-            tickers: tickers
+            riskProfile,
+            overallRisk,
+            tickers
         };
     }
 }

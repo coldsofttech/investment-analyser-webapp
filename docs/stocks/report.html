@@ -15,20 +15,23 @@
         <style>
             #historyTableMobileView,
             #forecastTableMobileView,
-            #dividendsTableMobileView {
+            #dividendsTableMobileView,
+            #etfTopHoldingsTableMobileView {
                 display: none;
             }
 
             @media (max-width: 768px) {
                 #historyTableDesktopView,
                 #forecastTableDesktopView,
-                #dividendsTableDesktopView {
+                #dividendsTableDesktopView,
+                #etfTopHoldingsTableDesktopView {
                     display: none;
                 }
 
                 #historyTableMobileView,
                 #forecastTableMobileView,
-                #dividendsTableMobileView {
+                #dividendsTableMobileView,
+                #etfTopHoldingsTableMobileView {
                     display: block;
                 }
             }
@@ -53,6 +56,7 @@
             <div id="stockchart-placeholder" class="pt-sm-2"></div>
             <div id="futureperformance-placeholder" class="pt-sm-2"></div>
             <div id="dividends-placeholder" class="pt-sm-2"></div>
+            <div id="etfholdings-placeholder" class="pt-sm-2"></div>
         </div>
         <div id="keyterminology-placeholder"></div>
 
@@ -191,6 +195,9 @@
                         stocksOwned,
                         defaultCurrency
                     ),
+                    await showETFHoldings(
+                        tickerObject.etfHoldings
+                    ),
                     await showHistoricalPerformance(
                         analyserObject.historicalPerformance
                     ),
@@ -248,7 +255,7 @@
                     eventName: 'headerReady',
                     detail: {
                         title: `${compInfo?.companyName} (${ticker})`,
-                        logo: await renderLogo(await truncWebsite(compInfo?.website))
+                        logo: await renderLogo(await truncWebsite(compInfo?.website), compInfo?.companyName)
                     }
                 });
 
@@ -336,6 +343,19 @@
                         fxRate: fxRate,
                         stocksOwned: stocksOwned,
                         defaultCurrency: defaultCurrency
+                    }
+                });
+            }
+
+            async function showETFHoldings(data) {
+                await loadFragmentAndDispatch({
+                    selector: '#etfholdings-placeholder',
+                    url: '../public/stocks/etf-holdings.html',
+                    eventType: 'CustomEvent',
+                    eventName: 'etfHoldingsReady',
+                    detail: {
+                        topHoldings: data?.topHoldings,
+                        sectorWeights: data?.sectorWeights
                     }
                 });
             }

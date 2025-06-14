@@ -12,6 +12,7 @@ class Ticker {
         this.dividends = null;
         this.events = null;
         this.stockData = null;
+        this.etfHoldings = null;
     }
 
     async init() {
@@ -28,6 +29,7 @@ class Ticker {
             this.dividends = await this._getDividends();
             this.events = await this._getEvents();
             this.stockData = await this._getLineChartData();
+            this.etfHoldings = await this._getETFHoldings();
             this.error = null;
         } catch(err) {
             this.error = {
@@ -124,6 +126,21 @@ class Ticker {
             return data.data;
         } catch (err) {
             throw new Error(`Line chart info fetch failed: ${err.message}`);
+        }
+    }
+
+    async _getETFHoldings() {
+        try {
+            if (!this.companyInfo?.type === "ETF") {
+                return null;
+            }
+
+            const url = `${this.api?.config?.domain}/tickers/${this.tickerCode}?fields=holdings`;
+            const data = await fetchWithCache(url, this.api?.headers);
+
+            return data.holdings;
+        } catch (err) {
+            throw new Error(`ETF Holdings fetch failed: ${err.message}`);
         }
     }
 }
