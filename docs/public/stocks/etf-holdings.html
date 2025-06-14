@@ -1,0 +1,162 @@
+<div id="holdings" class="d-none">
+    <h2 class="title">
+        <i class="bi bi-journal-text me-md-0 me-0"></i>
+        ETF Holdings
+    </h2>
+    <ul class="nav nav-tabs" id="etfHoldings-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="etfTopHoldings-tab" data-bs-toggle="tab"
+                    href="#etfTopHoldings" type="button" role="tab" aria-controls="etfTopHoldings"
+                    aria-selected="true">
+                    Top Holdings
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="etfSectorWeights-tab" data-bs-toggle="tab"
+                    href="#etfSectorWeights" type="button" role="tab" aria-controls="etfSectorWeights">
+                    Sector Weights
+            </button>
+        </li>
+    </ul>
+    <div class="tab-content" id="etfHoldings-tabs-content">
+        <div class="tab-pane fade show active" id="etfTopHoldings" role="tabpanel" aria-labelledby="etfTopHoldings-tab">
+            <div class="row m-2">
+                <div id="etfTopHoldingsTableDesktopView">
+                    <table id="etfTopHoldingsTable" class="display dataTable">
+                        <thead>
+                            <tr>
+                                <th>Ticker</th>
+                                <th>Company</th>
+                                <th class="text-right">Weight %</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+                <div id="etfTopHoldingsTableMobileView" class="accordion"></div>
+            </div>
+        </div>
+        <div class="tab-pane fade show" id="etfSectorWeights" role="tabpanel" aria-labelledby="etfSectorWeights-tab">
+            <div class="plotly-chart m-2" id="etfSectorWeights-container">
+                <div id="etfSectorWeights-chart" class="d-flex justify-content-center align-items-center h-100 text-center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let sectorData = null;
+    const sectorChartId = 'etfSectorWeights-chart';
+
+    async function showTopHoldings(data) {
+        const processedData = await Promise.all(data.map(async (row) => {
+            const formatP = async (val) => val === null ? 'N/A' : await formatPercentage(val);
+
+            return {
+                ticker: `<a target="_blank" href="${getRootPath()}stocks/report.html?ticker=${row.tickerCode}">${row.tickerCode}</a>`,
+                name: `<span>${row.companyName}</span>`,
+                weight: `<span>${await formatP(row.weight * 100)}</span>`
+            };
+        }));
+
+        const columns = [
+            { data: 'ticker', title: 'Ticker' },
+            { data: 'name', title: 'Company' },
+            { data: 'weight', title: 'Weight %' },
+        ];
+
+        await renderDataTable({
+            selector: $('#etfTopHoldingsTable'),
+            data: processedData,
+            columns: columns,
+            rightAlignColumns: [2],
+            additionalOptions: {
+                order: [[2, 'desc']]
+            }
+        });
+
+        await renderDataTableMobileView({
+            elementId: '#etfTopHoldingsTableMobileView',
+            data: processedData,
+            columns: columns,
+            titleFields: ['ticker', 'weight']
+        });
+    }
+
+    async function showSectorWeights() {
+        await renderPieChart({
+            chartId: sectorChartId,
+            chartTitle: 'Sector Weights',
+            data: sectorData,
+            showLegend: !isMobileView(),
+            legendPosition: isMobileView() ? 'inside' : 'outside'
+        });
+
+        Plotly.Plots.resize(document.getElementById(sectorChartId));
+    }
+
+    async function handleTabShown1(tabId) {
+        if (tabId === 'etfSectorWeights' && sectorData) {
+            await showSectorWeights();
+        }
+    }
+
+    async function transformSectorDataForPieChart(data) {
+        let labels = [], values = [], hoverTexts = [];
+
+        const capitalize = (text) => {
+            return text.charAt(0).toUpperCase() + text.slice(1);
+        }
+
+        for (const item of data) {
+            labels.push(capitalize(item.sector));
+            values.push(item.value);
+            hoverTexts.push(`${capitalize(item.sector)}: ${await formatPercentage(item.value * 100)}`);
+        }
+
+        return {
+            labels,
+            values,
+            hoverTexts
+        };
+    }
+    
+    document.addEventListener('etfHoldingsReady', async function(event) {
+        const detail = event.detail || {};
+        const { topHoldings, sectorWeights } = detail;
+
+        if (topHoldings || sectorWeights) {
+            document.getElementById('holdings').classList.remove('d-none');
+        } else {
+            return document.getElementById('holdings').classList.add('d-none');
+        }
+
+        sectorData = await transformSectorDataForPieChart(detail.sectorWeights || []);
+        const activeTabId = document.querySelector('.nav-link.active')?.getAttribute('href')?.substring(1);
+
+        if (activeTabId) {
+            handleTabShown1(activeTabId);
+        }
+
+        if (topHoldings) {
+            await showTopHoldings(detail.topHoldings);
+        }
+    });
+
+    document.querySelectorAll('#etfHoldings-tabs button[data-bs-toggle="tab"]').forEach(button => {
+        button.addEventListener('shown.bs.tab', function(event) {
+            const targetId = event.target.getAttribute('href').substring(1);
+            handleTabShown1(targetId);
+        });
+    });
+
+    window.addEventListener('resize', () => {
+        const element = document.getElementById(sectorChartId);
+        if (!sectorData || !element || element.children.length === 0) {
+            return;
+        }
+
+        Plotly.relayout(sectorChartId, { showlegend: !isMobileView() });
+        Plotly.restyle(sectorChartId, { textposition: [isMobileView() ? 'inside' : 'outside' ]}, [0]);
+        Plotly.Plots.resize(document.getElementById(sectorChartId));
+    });
+</script>
