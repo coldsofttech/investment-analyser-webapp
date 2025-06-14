@@ -180,7 +180,7 @@
 
                     analyserObject = new PieAnalyser(tickerObjects, netValue);
                 } catch (err) {
-                    return displayError(tObj.error.message, true, errorRedirectionUrl);
+                    return displayError(err.message, true, errorRedirectionUrl);
                 }
 
                 await Promise.all([
@@ -442,7 +442,9 @@
                 data.forEach(async (stock) => {
                     const investment = parseFloat(stock.stocksOwned * stock.avgPrice);
                     if (investment > 0) {
-                        const label = stock.info[attr];
+                        const label = stock.info[attr] 
+                            ? stock.info[attr]
+                            : (stock.info?.type === 'ETF' ? 'Exchange-Traded Fund': '')
                         labelMap[label] = (labelMap[label] || 0) + investment;
                     }
                 });
