@@ -7,10 +7,17 @@ const colorPalette = [
     '#FF7F50', '#8B0000', '#800080', '#00FA9A', '#B0E0E6', '#E6E6FA', '#DCDCDC'
 ];
 
-async function renderLogo(domain) {
-    if (!domain) return '/static/img/default-logo.png';
+async function renderLogo(domain, companyName=null) {
+    if (domain) {
+        return `https://logo.clearbit.com/${domain}`;
+    }
 
-    return `https://logo.clearbit.com/${domain}`;
+    if (companyName) {
+        const name = encodeURIComponent(companyName.charAt(0));
+        return `https://ui-avatars.com/api/?name=${name}&color=000`;
+    }
+
+    return '/static/img/default-logo.png';
 }
 
 async function renderDataTableMobileView({
@@ -179,10 +186,23 @@ async function renderLineChart({
     };
 
     if (showRangeSlider) {
-        const allDates = data.series[0]?.dates || [];
-        const startDate = new Date(allDates[0]);
-        const endDate = new Date(allDates[allDates.length - 1]);
-        const yearRange = (endDate - startDate) / (1000 * 60 * 60 * 24 * 365.25);
+        let minDate = null, maxDate = null;
+        data.series.forEach(s => {
+            if (!s.dates || s.dates.length === 0) {
+                return;
+            }
+
+            const start = new Date(s.dates[0]);
+            const end = new Date(s.dates[s.dates.length - 1]);
+
+            if (!minDate || start < minDate) {
+                minDate = start;
+            }
+            if (!maxDate || end > maxDate) {
+                maxDate = end;
+            }
+        });
+        const yearRange = (maxDate - minDate) / (1000 * 60 * 60 * 24 * 365.25);
         const rangeButtons = [
             { count: 1, label: '1M', step: 'month', stepmode: 'backward' },
             { count: 3, label: '3M', step: 'month', stepmode: 'backward' },
