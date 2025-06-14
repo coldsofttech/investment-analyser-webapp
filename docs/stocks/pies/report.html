@@ -128,8 +128,9 @@
 
             async function initPage() {
                 const { urlParams, id } = await parseParams();
-                const { by, name, source, instruments } = await parseInput(id);
+                const { by, name, source, instruments, pieAmount } = await parseInput(id);
                 let errorRedirectionUrl = null;
+                console.log(pieAmount);
 
                 if (source === 'new') {
                     errorRedirectionUrl = `${getRootPath()}stocks/pies/input.html?${decodeURIComponent(urlParams.toString())}`;
@@ -158,8 +159,24 @@
                     let tObj = null;
 
                     try {
-                        tObj = new Ticker(item.ticker, defaultCurrency, item.stocksOwned, item.avgPrice);
-                        await tObj.init();
+                        if (by === 'stocksOwned') {
+                            tObj = new Ticker(item.ticker, defaultCurrency, item.stocksOwned, item.avgPrice);
+                            await tObj.init();
+                        } else if (by === 'percentage') {
+                            let stocksOwned = 0;
+                            if (item.avgPrice > 0) {
+                                stocksOwned = await calculateStocksOwned(pieAmount, item.percentage, item.avgPrice, null);
+                                tObj = new Ticker(item.ticker, defaultCurrency, stocksOwned, item.avgPrice);
+                                await tObj.init();
+                            } else {
+                                const obj = new Ticker(item.ticker, defaultCurrency);
+                                await obj.init();
+                                const lastPrice = obj?.priceInfo?.currentPrice * obj?.fxRate;
+                                stocksOwned = await calculateStocksOwned(pieAmount, item.percentage, null, lastPrice);
+                                tObj = new Ticker(item.ticker, defaultCurrency, stocksOwned, lastPrice);
+                                await tObj.init();
+                            }
+                        }
                     } catch (err) {
                         return displayError(err.message, true, errorRedirectionUrl);
                     }
@@ -247,8 +264,9 @@
                 const name = data.name;
                 const source = data.source;
                 const instruments = data.instruments;
+                const pieAmount = data.amount;
 
-                return { by, name, source, instruments };
+                return { by, name, source, instruments, pieAmount };
             }
 
             async function parseDefaultCurrency() {

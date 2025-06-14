@@ -1,3 +1,22 @@
+async function calculateStocksOwned(pieAmount, allocPercent, avgPrice, closePrice) {
+    const priceToUse = (avgPrice !== null && avgPrice !== undefined && avgPrice > 0) ? avgPrice : closePrice;
+    if (!priceToUse || priceToUse <= 0) {
+        throw new Error('Valid price (avgPrice or closePrice) must be provided.');
+    }
+
+    if (!pieAmount || pieAmount <= 0) {
+        throw new Error('Valid pieAmount must be provided.');
+    }
+
+    if (allocPercent === undefined || allocPercent < 0) {
+        throw new Error('Allocation % must be non-negative.');
+    }
+
+    const amountAllocated = pieAmount * (allocPercent / 100);
+    const stocksOwned = amountAllocated / priceToUse;
+    return stocksOwned.toFixed(6);
+}
+
 class Ticker {
     constructor(ticker, defaultCurrency, stocksOwned = null, avgPrice = null) {
         this.tickerCode = ticker;

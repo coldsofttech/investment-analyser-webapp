@@ -102,7 +102,7 @@
                         <div class="input-group">
                             <input type="text" class="form-control" name="name" id="name" placeholder="Name"
                                    required>
-                            <l class="input-group-text bi bi-alphabet-uppercase"></i>
+                            <i class="input-group-text bi bi-alphabet-uppercase"></i>
                         </div>
                     </div>
                 </div>
@@ -117,6 +117,31 @@
                             <input type="number" class="form-control" name="noOfStocks" id="noOfStocks" 
                                    placeholder="0" min="1" max="50" required> 
                             <i class="input-group-text bi bi-123"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row padding">
+                    <div class="col-md-4"></div>
+                    <div class="col-md-8">
+                        <div class="form-check form-switch align-items-center text-right">
+                            <input class="form-check-input" type="checkbox" id="byPercentage" name="byPercentage">
+                            <label class="form-check-label" for="byPercentage">Enable % Allocation</label>
+                            <i class="optional-text">(Select for Allocation % instead of Stocks Owned)</i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row padding d-none" id="pieAmount-container">
+                    <div class="col-md-4">
+                        <label for="pieAmount">Pie Amount</label>
+                        <i class="optional-text">(Total amount of the pie, <span id="currency"></span>)</i>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <input type="currency" class="form-control" name="pieAmount" id="pieAmount" step="0.01" 
+                                   placeholder="0.00">
+                            <i class="input-group-text bi bi-cash" id="currencySymbol"></i>
                         </div>
                     </div>
                 </div>
@@ -195,6 +220,7 @@
             let inputTable;
             let noOfStocks = 0;
             let tableExists = false;
+            let byPercentageGlobal = false;
 
             $(async function() {
                 const htmlFragments = [
@@ -227,22 +253,29 @@
                         selector: '#scrolltotop-placeholder',
                         url: '../../public/scroll-to-top.html',
                         eventName: 'scrollToTopReady'
-                    },
-                    {
-                        selector: '#tickerinputform-placeholder',
-                        url: '../../public/stocks/ticker-input-form.html',
-                        eventName: 'tickerInputFormReady',
                     }
                 ];
 
                 await loadAllFragments(htmlFragments);
+                await getDefaultCurrency(customCurrency = '#currency', customSymbol = '#currencySymbol');
                 await initNext();
             });
 
             async function initNext() {
+                $('#byPercentage').on('change', function() {
+                    if ($(this).is(':checked')) {
+                        $('#pieAmount-container').removeClass('d-none');
+                    } else {
+                        $('#pieAmount-container').addClass('d-none');
+                    }
+                });
+
                 $('#next').on('click', async function() {
                     const pieName = $('#name').val().trim();
                     const stocksCount = parseInt($('#noOfStocks').val());
+                    const byPercentage = $('#byPercentage').is(':checked');
+                    const pieAmount = $('#pieAmount').val();
+                    byPercentageGlobal = byPercentage;
 
                     if (!pieName) {
                         return displayError('Please enter a name for the Pie.');
@@ -252,81 +285,122 @@
                         return displayError('Please enter a valid number of stocks between 1 and 50.');
                     }
 
+                    if (byPercentage && (!pieAmount || parseFloat(pieAmount) < 0)) {
+                        return displayError('Please enter the pie amount.');
+                    }
+
                     removeError();
                     noOfStocks = stocksCount;
+
+                    await loadFragmentAndDispatch({
+                        selector: '#tickerinputform-placeholder',
+                        url: '../../public/stocks/ticker-input-form.html',
+                        eventType: 'CustomEvent',
+                        eventName: 'tickerInputFormReady',
+                        detail: {
+                            byPercentage: byPercentageGlobal
+                        }
+                    });
 
                     if (tableExists) {
                         if (!confirm('Proceeding will clear existing data. Do you want to continue?')) {
                             return;
                         }
 
-                        await initInputTable();
+                        await initInputTable(byPercentage);
                     } else {
-                        await initInputTable();
+                        await initInputTable(byPercentage);
                     }
 
                     $('#input-container').removeClass('d-none');
                 });
             }
 
-            async function initInputTable() {
+            async function initInputTable(byPercentage) {
                 if (tableExists) {
                     inputTable.clear().draw();
                     $('#inputTableMobileView').empty();
-                } else {
-                    inputTable = $('#inputTable').DataTable({
-                        searching: false,
-                        paging: false,
-                        info: false,
-                        responsive: true,
-                        scrollCollapse: true,
-                        columnDefs: [
-                            { targets: [0], className: 'text-right' },
-                            { targets: [2], className: 'text-right' },
-                            { targets: [3], className: 'text-right' },
-                            { targets: [4], orderable: false, searchable: false }
-                        ],
-                        columns: [
-                            { data: 'index' },
-                            { data: 'ticker' },
-                            { data: 'stocksOwned' },
-                            { 
-                                data: 'avgPrice', 
-                                render: function(data) {
-                                    return data !== '' ? parseFloat(data).toFixed(2) : '';
-                                } 
-                            },
-                            { 
-                                data: null, 
-                                defaultContent: '<button type="button" class="btn btn-sm btn-custom-blue" title="Edit"><i class="bi bi-pencil"></i></button>',
-                                orderable: false,
-                                searchable: false
-                            }
-                        ],
-                        createdRow: function(row, data, dataIndex) {
-                            $('td', row).eq(0).html(dataIndex + 1);
-                            $('td', row).eq(2).addClass('text-right');
-                            $('td', row).eq(3).addClass('text-right');
-                            
-                            const editBtn = $('<button type="button" class="btn btn-sm btn-custom-blue" title="Edit"><i class="bi bi-pencil"></i></button>');
-                            $('td', row).eq(4).empty().append(editBtn);
+                    inputTable.destroy();
+                    tableExists = false;
+                } 
 
-                            editBtn.on('click', function() {
-                                openEditDialog(dataIndex);
-                            });
+                let columns = [
+                    { data: 'index', title: '#', className: 'text-right' },
+                    { data: 'ticker', title: 'Ticker' }
+                ];
+
+                if (byPercentage) {
+                    columns.push({
+                        data: 'percentage',
+                        title: 'Allocation %',
+                        className: 'text-right',
+                        render: function(data) {
+                            return data !== '' ? parseFloat(data).toFixed(2) : '';
                         }
                     });
-
-                    tableExists = true;
+                } else {
+                    columns.push({
+                        data: 'stocksOwned',
+                        title: 'Stocks Owned',
+                        className: 'text-right',
+                        render: function(data) {
+                            return data !== '' ? parseFloat(data) : '';
+                        }
+                    });
                 }
 
+                columns.push({
+                    data: 'avgPrice',
+                    title: 'Avg. Price',
+                    className: 'text-right',
+                    render: function(data) {
+                        return data !== '' && data !== null ? parseFloat(data).toFixed(2) : '';
+                    }
+                });
+                columns.push({
+                    data: null,
+                    title: '',
+                    defaultContent: '<button type="button" class="btn btn-sm btn-custom-blue" title="Edit"><i class="bi bi-pencil"></i></button>',
+                    orderable: false,
+                    searchable: false
+                });
+                
+                inputTable = $('#inputTable').DataTable({
+                    searching: false,
+                    paging: false,
+                    info: false,
+                    responsive: true,
+                    scrollCollapse: true,
+                    columns: columns,
+                    createdRow: function(row, data, dataIndex) {
+                        $('td', row).eq(0).html(dataIndex + 1);
+                        
+                        const editBtn = $('<button type="button" class="btn btn-sm btn-custom-blue" title="Edit"><i class="bi bi-pencil"></i></button>');
+                        $('td', row).eq(4).empty().append(editBtn);
+                    }
+                });
+
+                $('#inputTable tbody').on('click', '.btn-custom-blue', function() {
+                    const tr = $(this).closest('tr');
+                    const rowIndex = inputTable.row(tr).index();
+                    openEditDialog(rowIndex);
+                });
+
+                tableExists = true;
                 for (let i = 0; i < noOfStocks; i++) {
-                    inputTable.row.add({
+                    const emptyRow = {
                         index: i + 1,
                         ticker: '',
-                        stocksOwned: '',
                         avgPrice: ''
-                    }).draw(false);
+                    };
+
+                    if (byPercentage) {
+                        emptyRow.percentage = '';
+                    } else {
+                        emptyRow.stocksOwned = '';
+                    }
+
+                    inputTable.row.add(emptyRow).draw(false);
                 }
 
                 await initInputAccordion();
@@ -345,6 +419,21 @@
                     const d = this.data();
                     const headerId = `${parentId}-header${rowIdx}`;
                     const collapseId = `${parentId}-collapse${rowIdx}`;
+
+                    let secondRowHtml = '';
+                    if (byPercentageGlobal) {
+                        secondRowHtml = `
+                            <li class="d-flex justify-content-between">
+                                <strong>Allocation %:</strong> <span>${d.percentage}</span>
+                            </li>
+                        `;
+                    } else {
+                        secondRowHtml = `
+                            <li class="d-flex justify-content-between">
+                                <strong>Stocks Owned:</strong> <span>${d.stocksOwned}</span>
+                            </li>
+                        `;
+                    }
 
                     const headerContent = `
                         <h2 class="accordion-header" id="${headerId}">
@@ -366,9 +455,7 @@
                              aria-labelledby="${headerId}" data-bs-parent="#${parentId}">
                              <div class="accordion-body">
                                 <ul class="list-unstyled mb-0">
-                                    <li class="d-flex justify-content-between">
-                                        <strong>Stocks Owned:</strong> <span>${d.stocksOwned}</span>
-                                    </li>
+                                    ${secondRowHtml}
                                     <li class="d-flex justify-content-between">
                                         <strong>Avg. Price:</strong> <span>${d.avgPrice}</span>
                                     </li>
@@ -393,9 +480,18 @@
 
                 $('#rowIndex').val(rowIndex);
                 $('#ticker').val(rowData.ticker);
-                $('#stocksOwned').val(rowData.stocksOwned);
                 $('#avgPrice').val(rowData.avgPrice);
+                $('#percentage-container').addClass('d-none');
+                $('#stocksOwned-container').addClass('d-none');
 
+                if (byPercentageGlobal) {
+                    $('#percentage-container').removeClass('d-none');
+                    $('#percentage').val(rowData.percentage);
+                } else {
+                    $('#stocksOwned-container').removeClass('d-none');
+                    $('#stocksOwned').val(rowData.stocksOwned);
+                }
+                
                 $('#input-dialog').dialog({
                     modal: true,
                     width: 'auto',
@@ -409,32 +505,43 @@
                             html: '<i class="bi bi-floppy"></i>',
                             class: 'btn btn-custom-blue',
                             click: function() {
+                                const rowIndex = parseInt($('#rowIndex').val());
                                 const tickerVal = $('#ticker').val().trim();
-                                const stocksOwnedVal = $('#stocksOwned').val();
                                 const avgPriceVal = $('#avgPrice').val();
 
                                 if (!tickerVal) {
                                     return alert('Ticker is required.');
                                 }
 
-                                if (stocksOwnedVal === '' || isNaN(stocksOwnedVal) || parseFloat(stocksOwnedVal) < 0) {
-                                    return alert('Stocks Owned must be a non-negative number.');
+                                let updatedData = {
+                                    index: rowIndex + 1,
+                                    ticker: tickerVal.toUpperCase()
+                                };
+
+                                if (byPercentageGlobal) {
+                                    const percentageVal = $('#percentage').val();
+                                    if (percentageVal === '' || isNaN(percentageVal) || parseFloat(percentageVal) < 0) {
+                                        return alert('Allocation % must be a non-negative number.');
+                                    }
+                                    updatedData.percentage = parseFloat(percentageVal);
+                                    updatedData.avgPrice = avgPriceVal !== '' ? parseFloat(avgPriceVal) : null;
+                                    updatedData.stocksOwned = null;
+                                } else {
+                                    const stocksOwnedVal = $('#stocksOwned').val();
+                                    if (stocksOwnedVal === '' || isNaN(stocksOwnedVal) || parseFloat(stocksOwnedVal) < 0) {
+                                        return alert('Stocks Owned must be a non-negative number.');
+                                    }
+                                    if (avgPriceVal === '' || isNaN(avgPriceVal) || parseFloat(avgPriceVal) < 0) {
+                                        return alert('Avg. Price must be a non-negative number.');
+                                    }
+                                    updatedData.stocksOwned = parseFloat(stocksOwnedVal);
+                                    updatedData.avgPrice = parseFloat(avgPriceVal);
+                                    updatedData.percentage = null;
                                 }
 
-                                if (avgPriceVal === '' || isNaN(avgPriceVal) || parseFloat(avgPriceVal) < 0) {
-                                    return alert('Avg. Price must be a non-negative number.');
-                                }
-
-                                const idx = parseInt($('#rowIndex').val());
-                                inputTable.row(idx).data({
-                                    index: idx + 1,
-                                    ticker: tickerVal.toUpperCase(),
-                                    stocksOwned: parseFloat(stocksOwnedVal),
-                                    avgPrice: parseFloat(avgPriceVal)
-                                }).draw(false);
-
-                                initInputAccordion();
+                                inputTable.row(rowIndex).data(updatedData).draw(false);
                                 $(this).dialog('close');
+                                initInputAccordion();
                             }
                         }
                     ],
@@ -459,19 +566,99 @@
                     }
                 });
             }
+
+            async function validateInputTable() {
+                const rows = inputTable.rows().data().toArray();
+
+                if (rows.length !== noOfStocks) {
+                    displayError(`Number of stocks entered (${noOfStocks}) does not match the number of rows(${rows.length}).`);
+                    return false;
+                }
+
+                if (byPercentageGlobal) {
+                    let totalPercentage = 0;
+                    const seenTickers = new Set();
+                    for (const row of rows) {
+                        if (!row.ticker || row.ticker.trim() === '') {
+                            displayError('Ticker is required for all entries.');
+                            return false;
+                        }
+
+                        if (seenTickers.has(row.ticker.toUpperCase())) {
+                            displayError(`Duplicate ticker detected: ${row.ticker}`);
+                            return false;
+                        }
+                        seenTickers.add(row.ticker.toUpperCase());
+
+                        if (row.percentage === null || row.percentage === '') {
+                            displayError(`Percentage is required for ticker ${row.ticker}.`);
+                            return false;
+                        }
+
+                        totalPercentage += parseFloat(row.percentage);
+                    }
+
+                    if (Math.abs(totalPercentage - 100) > 0.01) {
+                        displayError(`Total percentage must sum to 100%. Currently: ${await formatPercentage(totalPercentage)}.`);
+                        return false;
+                    }
+                } else {
+                    const seenTickers = new Set();
+                    for (const row of rows) {
+                        if (!row.ticker || row.ticker.trim() === '') {
+                            displayError('Ticker is required for all entries.');
+                            return false;
+                        }
+
+                        if (seenTickers.has(row.ticker.toUpperCase())) {
+                            displayError(`Duplicate ticker detected: ${row.ticker}`);
+                            return false;
+                        }
+                        seenTickers.add(row.ticker.toUpperCase());
+
+                        if (row.stocksOwned === null || row.stocksOwned === '') {
+                            displayError(`Stocks Owned is required for ticker ${row.ticker}.`);
+                            return false;
+                        }
+
+                        if (row.avgPrice === null || row.avgPrice === '') {
+                            displayError(`Average Price is required for ticker ${row.ticker}.`);
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
         
             async function initSubmit() {
-                $('#submit').click(function() {
+                $('#submit').click(async function() {
+                    if (!await validateInputTable()) {
+                        return;
+                    }
+
                     const name = $('#name').val().trim();
                     const noOfStocks = $('#noOfStocks').val();
+                    const by = byPercentageGlobal ? 'percentage' : 'stocksOwned';
+
                     const urlParams = new URLSearchParams(window.location.search);
-                    const by = urlParams.get('by');
                     const instruments = inputTable.rows().data().toArray().map(row => {
-                        return {
-                            ticker: row.ticker,
-                            stocksOwned: row.stocksOwned,
-                            avgPrice: row.avgPrice
-                        };
+                        const ticker = row.ticker;
+                        const avgPrice = row.avgPrice;
+
+                        if (byPercentageGlobal) {
+                            return {
+                                ticker: ticker,
+                                percentage: row.percentage,
+                                avgPrice: avgPrice
+                            };
+                        } else {
+                            return {
+                                ticker: ticker,
+                                stocksOwned: row.stocksOwned,
+                                avgPrice: avgPrice
+                            };
+                        }
                     });
                     const data = {
                         by: by,
@@ -480,6 +667,11 @@
                         source: 'new',
                         instruments: instruments
                     };
+
+                    if (byPercentageGlobal) {
+                        data.amount = parseFloat(pieAmount);
+                    }
+                    
                     const jsonString = JSON.stringify(data, null, 4);
                     const uniqueId = crypto.randomUUID();
                     sessionStorage.setItem(uniqueId, jsonString);
@@ -490,17 +682,34 @@
             }
 
             async function initDownload() {
-                $('#download').click(function() {
+                $('#download').click(async function() {
+                    if (!await validateInputTable()) {
+                        return;
+                    }
+
                     const name = $('#name').val().trim();
                     const noOfStocks = $('#noOfStocks').val();
+                    const by = byPercentageGlobal ? 'percentage' : 'stocksOwned';
+                    const pieAmount = $('#pieAmount').val();
+
                     const urlParams = new URLSearchParams(window.location.search);
-                    const by = urlParams.get('by');
                     const instruments = inputTable.rows().data().toArray().map(row => {
-                        return {
-                            ticker: row.ticker,
-                            stocksOwned: row.stocksOwned,
-                            avgPrice: row.avgPrice
-                        };
+                        const ticker = row.ticker;
+                        const avgPrice = row.avgPrice;
+
+                        if (byPercentageGlobal) {
+                            return {
+                                ticker: ticker,
+                                percentage: row.percentage,
+                                avgPrice: avgPrice
+                            };
+                        } else {
+                            return {
+                                ticker: ticker,
+                                stocksOwned: row.stocksOwned,
+                                avgPrice: avgPrice
+                            };
+                        }
                     });
                     const data = {
                         by: by,
@@ -508,6 +717,11 @@
                         noOfStocks: noOfStocks,
                         instruments: instruments
                     };
+
+                    if (byPercentageGlobal) {
+                        data.amount = parseFloat(pieAmount);
+                    }
+
                     const jsonString = JSON.stringify(data, null, 4);
                     const blob = new Blob([jsonString], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
