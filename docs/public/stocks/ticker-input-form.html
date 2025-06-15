@@ -4,12 +4,13 @@
         <i class="optional-text">(Symbol, like NVDA for Nvidia)</i>
     </div>
     <div class="col-md-8">
-        <div class="input-group">
+        <div class="input-group position-relative">
             <input type="hidden" id="rowIndex">
             <input type="text" class="form-control" name="ticker" id="ticker" placeholder="Ticker" 
                    pattern="^[A-Z0-9.]+$" title="Only uppercase letters, numbers, and '.' are allowed." 
-                   required>
+                   autocomplete="off" required>
             <i class="input-group-text bi bi-alphabet-uppercase"></i>
+            <div id="tickerSuggestions" class="dropdown-menu show w-100" style="display: none; position: absolute; top: 100%; left: 0; z-index: 1000;"></div>
         </div>
     </div>
 </div>
@@ -22,7 +23,7 @@
     <div class="col-md-8">
         <div class="input-group">
             <input type="number" class="form-control" name="stocksOwned" id="stocksOwned" step="any" 
-                   placeholder="0.00">
+                   placeholder="0.00" autocomplete="off">
             <i class="input-group-text bi bi-123"></i>
         </div>
     </div>
@@ -36,7 +37,7 @@
     <div class="col-md-8">
         <div class="input-group">
             <input type="number" class="form-control" name="percentage" id="percentage" step="any"
-                   placeholder="0.00" min="0" max="100">
+                   placeholder="0.00" min="0" max="100" autocomplete="off">
             <i class="input-group-text bi bi-percent"></i>
         </div>
     </div>
@@ -50,7 +51,7 @@
     <div class="col-md-8">
         <div class="input-group">
             <input type="currency" class="form-control" name="avgPrice" id="avgPrice" step="0.01" 
-                   placeholder="0.00">
+                   placeholder="0.00" autocomplete="off">
             <i class="input-group-text bi bi-cash" id="currencySymbol"></i>
         </div>
     </div>
@@ -77,8 +78,8 @@
         }
 
         $('#avgPrice-content').html(avgPriceContent);
+        await getDefaultCurrency(customCurrency = '#currency', customSymbol = '#currencySymbol');
 
         await validateTicker('#ticker');
-        await getDefaultCurrency(customCurrency = '#currency', customSymbol = '#currencySymbol');
     });
 </script>

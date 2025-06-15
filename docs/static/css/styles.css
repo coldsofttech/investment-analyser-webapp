@@ -87,13 +87,14 @@ body {
     color: var(--text-dark);
     max-width: 90%;
     line-height: 1.4;
-    /* position: absolute; 
-    top: 50%; 
-    left: 50%;
-    transform: translate(-50%, -50%); 
-    font-size: 24px; 
-    font-weight: bold; 
-    color: var(--text-dark); */
+}
+
+#tickerSuggestions.dropdown-menu {
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: white;
+    border: 1px solid #ccc;
+    z-index: 1000;
 }
 
 input::placeholder {
@@ -562,8 +563,10 @@ input:checked + .slider:before {
     background-color: #f0f4f8;
 }
 
-.dropdown-item:hover {
+.dropdown-item:hover,
+.dropdown-item.active {
     background-color: #f0f4f8;
+    color: var(--text-dark);
     text-decoration: underline;
     text-decoration-color: var(--primary);
     text-decoration-thickness: 2px;

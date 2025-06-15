@@ -17,6 +17,49 @@ async function calculateStocksOwned(pieAmount, allocPercent, avgPrice, closePric
     return stocksOwned.toFixed(6);
 }
 
+let allTickerInstance = null;
+async function getAllTickerInstance() {
+    if (allTickerInstance) {
+        return allTickerInstance;
+    }
+
+    try {
+        allTickerInstance = new AllTickers();
+        await allTickerInstance.init();
+
+        if (allTickerInstance.error) {
+            console.warn(`Error loading tickers: ${allTickerInstance.error.message}`);
+        }
+    } catch (err) {
+        console.warn(`Error loading tickers: ${err.message}`);
+    }
+
+    return allTickerInstance;
+}
+
+async function getCloudflareConfig() {
+    try {
+        const response = await fetch(`${getRootPath()}/static/js/cf-config.json`);
+        if (!response.ok) {
+            throw new Error(`Failed to load Cloudflare config (status ${response.status}).`);
+        }
+
+        const apiConfig = await response.json();
+        if (!apiConfig || !apiConfig.token || !apiConfig.domain) {
+            throw new Error('Invalid Cloudflare config file structure.');
+        }
+
+        const apiHeaders = {
+            'Authorization': `Bearer ${apiConfig.token}`,
+            'Content-Type': 'application/json'
+        };
+
+        return { apiConfig, apiHeaders };
+    } catch (err) {
+        throw new Error(`Cloudflare config error: ${err.message}`);
+    }
+}
+
 class Ticker {
     constructor(ticker, defaultCurrency, stocksOwned = null, avgPrice = null) {
         this.tickerCode = ticker;
@@ -36,7 +79,7 @@ class Ticker {
 
     async init() {
         try {
-            const { apiConfig, apiHeaders } = await this._getCloudflareConfig();
+            const { apiConfig, apiHeaders } = await getCloudflareConfig();
             this.api = {
                 config: apiConfig,
                 headers: apiHeaders
@@ -56,29 +99,6 @@ class Ticker {
                 stage: 'init',
                 ticker: this.tickerCode
             };
-        }
-    }
-
-    async _getCloudflareConfig() {
-        try {
-            const response = await fetch(`${getRootPath()}/static/js/cf-config.json`);
-            if (!response.ok) {
-                throw new Error(`Failed to load Cloudflare config (status ${response.status}).`);
-            }
-
-            const apiConfig = await response.json();
-            if (!apiConfig || !apiConfig.token || !apiConfig.domain) {
-                throw new Error('Invalid Cloudflare config file structure.');
-            }
-
-            const apiHeaders = {
-                'Authorization': `Bearer ${apiConfig.token}`,
-                'Content-Type': 'application/json'
-            };
-
-            return { apiConfig, apiHeaders };
-        } catch (err) {
-            throw new Error(`Cloudflare config error: ${err.message}`);
         }
     }
 
@@ -161,5 +181,53 @@ class Ticker {
         } catch (err) {
             throw new Error(`ETF Holdings fetch failed: ${err.message}`);
         }
+    }
+}
+
+class AllTickers {
+    constructor() {
+        this.api = null;
+        this.tickers = null;
+        this.error = null;
+    }
+
+    async init() {
+        try {
+            const { apiConfig, apiHeaders } = await getCloudflareConfig();
+            this.api = {
+                config: apiConfig,
+                headers: apiHeaders
+            };
+            this.tickers = await this._getAllTickers();
+            this.error = null;
+        } catch (err) {
+            this.error = {
+                message: err.message || 'Unknown error',
+                stage: 'init'
+            };
+        }
+    }
+
+    async _getAllTickers() {
+        try {
+            const url = `${this.api?.config?.domain}/tickers`;
+            const data = await fetchWithCache(url, this.api?.headers);
+
+            return data;
+        } catch (err) {
+            throw new Error(`All tickers fetch failed: ${err.message}`);
+        }
+    }
+
+    search(query) {
+        if (!this.tickers?.length || !query) {
+            return [];
+        }
+
+        return this.tickers.filter(t => t.includes(query.toUpperCase()));
+    }
+
+    isValid(tickerCode) {
+        return this.tickers?.includes(tickerCode.toUpperCase()) || false;
     }
 }

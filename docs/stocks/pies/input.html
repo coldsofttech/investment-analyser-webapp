@@ -101,7 +101,7 @@
                     <div class="col-md-8">
                         <div class="input-group">
                             <input type="text" class="form-control" name="name" id="name" placeholder="Name"
-                                   required>
+                                   autocomplete="off" required>
                             <i class="input-group-text bi bi-alphabet-uppercase"></i>
                         </div>
                     </div>
@@ -115,7 +115,7 @@
                     <div class="col-md-8">
                         <div class="input-group">
                             <input type="number" class="form-control" name="noOfStocks" id="noOfStocks" 
-                                   placeholder="0" min="1" max="50" required> 
+                                   placeholder="0" min="1" max="50" autocomplete="off" required> 
                             <i class="input-group-text bi bi-123"></i>
                         </div>
                     </div>
@@ -140,7 +140,7 @@
                     <div class="col-md-8">
                         <div class="input-group">
                             <input type="currency" class="form-control" name="pieAmount" id="pieAmount" step="0.01" 
-                                   placeholder="0.00">
+                                   placeholder="0.00" autocomplete="off">
                             <i class="input-group-text bi bi-cash" id="currencySymbol"></i>
                         </div>
                     </div>
@@ -215,6 +215,8 @@
         <script src="../../static/js/auth0.js"></script>
         <script src="../../static/js/currency.js"></script>
         <script src="../../static/js/validations.js"></script>
+        <script src="../../static/js/stocks/indexdb.js"></script>
+        <script src="../../static/js/stocks/ticker.js"></script>
 
         <script>
             let inputTable;
@@ -262,7 +264,12 @@
             });
 
             async function initNext() {
-                $('#byPercentage').on('change', function() {
+                const $name = $('#name');
+                const $noOfStocks = $('#noOfStocks');
+                const $percentage = $('#byPercentage');
+                const $amount = $('#pieAmount');
+
+                $percentage.on('change', function() {
                     if ($(this).is(':checked')) {
                         $('#pieAmount-container').removeClass('d-none');
                     } else {
@@ -270,26 +277,35 @@
                     }
                 });
 
-                $('#next').on('click', async function() {
-                    const pieName = $('#name').val().trim();
-                    const stocksCount = parseInt($('#noOfStocks').val());
-                    const byPercentage = $('#byPercentage').is(':checked');
-                    const pieAmount = $('#pieAmount').val();
+                $('#next').on('click', async function(e) {
+                    const pieName = $name.val().trim();
+                    const stocksCount = parseInt($noOfStocks.val());
+                    const byPercentage = $percentage.is(':checked');
+                    const pieAmount = $amount.val();
                     byPercentageGlobal = byPercentage;
 
                     if (!pieName) {
+                        e.preventDefault();
+                        $name.addClass('is-invalid');
                         return displayError('Please enter a name for the Pie.');
                     }
 
                     if (!stocksCount || stocksCount < 1 || stocksCount > 50) {
+                        e.preventDefault();
+                        $noOfStocks.addClass('is-invalid');
                         return displayError('Please enter a valid number of stocks between 1 and 50.');
                     }
 
                     if (byPercentage && (!pieAmount || parseFloat(pieAmount) < 0)) {
+                        e.preventDefault();
+                        $amount.addClass('is-invalid');
                         return displayError('Please enter the pie amount.');
                     }
 
                     removeError();
+                    $name.removeClass('is-invalid');
+                    $noOfStocks.removeClass('is-invalid');
+                    $amount.removeClass('is-invalid');
                     noOfStocks = stocksCount;
 
                     await loadFragmentAndDispatch({
@@ -504,13 +520,23 @@
                         {
                             html: '<i class="bi bi-floppy"></i>',
                             class: 'btn btn-custom-blue',
-                            click: function() {
+                            click: async function(e) {
+                                const $ticker = $('#ticker');
+                                const $stocksOwned = $('#stocksOwned');
+                                const $avgPrice = $('#avgPrice');
+                                const $percentage = $('#percentage');
                                 const rowIndex = parseInt($('#rowIndex').val());
-                                const tickerVal = $('#ticker').val().trim();
-                                const avgPriceVal = $('#avgPrice').val();
+                                const tickerVal = $ticker.val().toUpperCase().trim();
+                                const stocksOwnedVal = $stocksOwned.val();
+                                const avgPriceVal = $avgPrice.val();
+                                const percentageVal = $percentage.val();
+                                const allTickerInstance = await getAllTickerInstance();
+                                const isValid = allTickerInstance?.isValid(tickerVal);
 
-                                if (!tickerVal) {
-                                    return alert('Ticker is required.');
+                                if (!isValid) {
+                                    e.preventDefault();
+                                    $ticker.addClass('is-invalid');
+                                    return alert('Invalid ticker. Please choose from suggestions.');
                                 }
 
                                 let updatedData = {
@@ -519,25 +545,34 @@
                                 };
 
                                 if (byPercentageGlobal) {
-                                    const percentageVal = $('#percentage').val();
                                     if (percentageVal === '' || isNaN(percentageVal) || parseFloat(percentageVal) < 0) {
+                                        e.preventDefault();
+                                        $percentage.addClass('is-invalid');
                                         return alert('Allocation % must be a non-negative number.');
                                     }
                                     updatedData.percentage = parseFloat(percentageVal);
                                     updatedData.avgPrice = avgPriceVal !== '' ? parseFloat(avgPriceVal) : null;
                                     updatedData.stocksOwned = null;
                                 } else {
-                                    const stocksOwnedVal = $('#stocksOwned').val();
                                     if (stocksOwnedVal === '' || isNaN(stocksOwnedVal) || parseFloat(stocksOwnedVal) < 0) {
+                                        e.preventDefault();
+                                        $stocksOwned.addClass('is-invalid');
                                         return alert('Stocks Owned must be a non-negative number.');
                                     }
                                     if (avgPriceVal === '' || isNaN(avgPriceVal) || parseFloat(avgPriceVal) < 0) {
+                                        e.preventDefault();
+                                        $avgPrice.addClass('is-invalid');
                                         return alert('Avg. Price must be a non-negative number.');
                                     }
                                     updatedData.stocksOwned = parseFloat(stocksOwnedVal);
                                     updatedData.avgPrice = parseFloat(avgPriceVal);
                                     updatedData.percentage = null;
                                 }
+
+                                $ticker.removeClass('is-invalid');
+                                $stocksOwned.removeClass('is-invalid');
+                                $avgPrice.removeClass('is-invalid');
+                                $percentage.removeClass('is-invalid');
 
                                 inputTable.row(rowIndex).data(updatedData).draw(false);
                                 $(this).dialog('close');

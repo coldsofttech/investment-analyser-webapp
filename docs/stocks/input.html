@@ -72,6 +72,8 @@
         <script src="../static/js/auth0.js"></script>
         <script src="../static/js/currency.js"></script>
         <script src="../static/js/validations.js"></script>
+        <script src="../static/js/stocks/indexdb.js"></script>
+        <script src="../static/js/stocks/ticker.js"></script>
 
         <script>
             $(async function() {
@@ -121,9 +123,33 @@
 
             async function initSubmitButton() {
                 const $button = $('#submit');
-                const errorText = $('#errorMessage').text();
+                const $ticker = $('#ticker');
+                const $stocksOwned = $('#stocksOwned');
+                const $avgPrice = $('#avgPrice');
+                const allTickerInstance = await getAllTickerInstance();
 
-                $button.on('click', function() {
+                $button.on('click', function(e) {
+                    const tickerVal = $ticker.val().toUpperCase().trim();
+                    const stocksOwned = $stocksOwned.val();
+                    const avgPrice = $avgPrice.val();
+                    const isValid = allTickerInstance?.isValid(tickerVal);
+
+                    if (!isValid) {
+                        e.preventDefault();
+                        $ticker.addClass('is-invalid');
+                        return displayError('Invalid ticker. Please choose from suggestions.');
+                    }
+
+                    if (stocksOwned && parseFloat(stocksOwned) > 0) {
+                        if (!avgPrice || parseFloat(avgPrice) < 0) {
+                            e.preventDefault();
+                            $avgPrice.addClass('is-invalid');
+                            return displayError('Average Price is required when Stocks Owned is provided.');
+                        }
+                    }
+
+                    $ticker.removeClass('is-invalid');
+                    $avgPrice.removeClass('is-invalid');
                     localStorage.removeItem('lastError');
                     $('#form').submit();
                 });
