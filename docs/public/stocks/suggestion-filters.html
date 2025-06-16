@@ -84,9 +84,17 @@
         }
 
         const sectionId = `${property}Menu`;
+        const clearBtnId = `${property}ClearBtn`;
         const section = $(`
             <div class="mb-3">
-                <label class="form-label"><strong>${title}:</strong></label>
+                <div class="d-flex justify-content-between align-items-center">
+                    <label class="form-label"><strong>${title}:</strong></label>
+                    <div>
+                        <button type="button" id="${clearBtnId}" class="btn btn-sm text-danger" title="Clear">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                </div>
                 <div id="${sectionId}" class="ps-2" style="max-height: 200px; overflow-y: auto;"></div>
             </div>
         `);
@@ -104,6 +112,11 @@
             `;
             $menu.append(item);
         }
+
+        section.find(`#${clearBtnId}`).on('click', () => {
+            section.find('input[type=checkbox]').prop('checked', false);
+            filtersChanged();
+        });
     }
 
     async function loadRangeFilter({ property, title, min, max, step }, defaultMin = min, defaultMax = max) {
