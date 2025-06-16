@@ -48,14 +48,12 @@
             const val = Math.min(50, Math.max(1, parseInt($input.val() || 1)));
             syncTop(val);
             filtersChanged();
-            // document.dispatchEvent(new Event('filtersChanged'));
         });
 
         $slider.off('input').on('input', () => {
             const val = parseInt($slider.val());
             syncTop(val);
             filtersChanged();
-            // document.dispatchEvent(new Event('filtersChanged'));
         });
     }
 
@@ -171,7 +169,6 @@
 
         $slider.on('change', () => {
             filtersChanged();
-            // document.dispatchEvent(new Event('filtersChanged'));
         });
 
         $minInput.on('input', () => {
@@ -179,14 +176,12 @@
             const maxVal = Math.max(min, Math.min(parseFloat($maxInput.val() || max), max));
             $slider.set([minVal, maxVal]);
             filtersChanged();
-            // document.dispatchEvent(new Event('filtersChanged'));
         });
         $maxInput.on('input', () => {
             const minVal = Math.max(min, Math.min(parseFloat($minInput.val() || min), max));
             const maxVal = Math.max(min, Math.min(parseFloat($maxInput.val() || max), max));
             $slider.set([minVal, maxVal]);
             filtersChanged();
-            // document.dispatchEvent(new Event('filtersChanged'));
         });
     }
 
@@ -268,7 +263,6 @@
         });
 
         filtersChanged();
-        // document.dispatchEvent(new Event('filtersChanged'));
     });
 
     $('#resetFilters').on('click', async function() {
@@ -277,7 +271,6 @@
         $('#filterMenus input[type=checkbox]').prop('checked', false);
         await loadFilters(fullTickerData, {});
         filtersChanged();
-        // document.dispatchEvent(new Event('filtersChanged'));
     });
 
     let useLongTerm = true;
@@ -285,7 +278,6 @@
         useLongTerm = this.checked;
         $('#termToggleLabel').text(useLongTerm ? 'Long Term' : 'Short Term');
         filtersChanged();
-        // document.dispatchEvent(new Event('filtersChanged'));
     });
 
     async function getCurrentFilterSelections() {
