@@ -54,6 +54,10 @@ body {
     padding-bottom: 10px;
 }
 
+h4.title {
+    font-size: 1.5em;
+}
+
 .logo {
     height: 64px;
     width: auto;
