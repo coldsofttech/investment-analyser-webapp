@@ -23,6 +23,44 @@ async function getAllTickerInstance() {
         return allTickerInstance;
     }
 
+    const marketCapBucket = (val) => {
+        if (val < 300000000) {
+            return 'Micro (< $300M)';
+        } else if (val >= 300000000 && val < 2000000000) {
+            return 'Small ($300M - $2B)';
+        } else if (val >= 2000000000 && val < 10000000000) {
+            return 'Mid ($2B - $10B)';
+        } else if (val >= 10000000000 && val < 200000000000) {
+            return 'Large ($10B - $200B)';
+        } else if (val >= 200000000000) {
+            return 'Mega (> $200B)';
+        } else {
+            return 'Unknown';
+        }
+    }
+    const betaBucket = (val) => {
+        if (val < 0.8) {
+            return 'Low (< 0.8)';
+        } else if (val >= 0.8 && val < 1.2) {
+            return 'Neutral (0.8 - 1.2)';
+        } else if (val >= 1.2) {
+            return 'High (> 1.2)';
+        } else {
+            return 'Unknown';
+        }
+    }
+    const volatilityBucket = (val) => {
+        if (val < 0.15) {
+            return 'Low (< 0.15)';
+        } else if (val >= 0.15 && val < 0.30) {
+            return 'Medium (0.15 - 0.30)';
+        } else if (val >= 0.30) {
+            return 'High (> 0.30)';
+        } else {
+            return 'Unknown';
+        }
+    }
+
     try {
         allTickerInstance = new AllTickers();
         await allTickerInstance.init();
@@ -30,6 +68,12 @@ async function getAllTickerInstance() {
         if (allTickerInstance.error) {
             console.warn(`Error loading tickers: ${allTickerInstance.error.message}`);
         }
+
+        allTickerInstance.tickers.forEach(t => {
+            t.marketCapBucket = marketCapBucket(t?.marketCap);
+            t.betaBucket = betaBucket(t?.beta);
+            t.volatilityBucket = volatilityBucket(t?.volatility);
+        });
     } catch (err) {
         console.warn(`Error loading tickers: ${err.message}`);
     }
@@ -224,10 +268,16 @@ class AllTickers {
             return [];
         }
 
-        return this.tickers.filter(t => t.includes(query.toUpperCase()));
+        return this.tickers.filter(t => 
+            t.ticker.includes(query.toUpperCase())
+        );
     }
 
     isValid(tickerCode) {
-        return this.tickers?.includes(tickerCode.toUpperCase()) || false;
+        if (!this.tickers?.length || !tickerCode) {
+            return false;
+        }
+
+        return this.tickers.some(t => t.ticker === tickerCode.toUpperCase());
     }
 }

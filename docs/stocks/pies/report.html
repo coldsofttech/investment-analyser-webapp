@@ -130,7 +130,6 @@
                 const { urlParams, id } = await parseParams();
                 const { by, name, source, instruments, pieAmount } = await parseInput(id);
                 let errorRedirectionUrl = null;
-                console.log(pieAmount);
 
                 if (source === 'new') {
                     errorRedirectionUrl = `${getRootPath()}stocks/pies/input.html?${decodeURIComponent(urlParams.toString())}`;

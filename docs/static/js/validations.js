@@ -12,7 +12,7 @@ async function validateTicker(
         selectedIndex = -1;
 
         matches.forEach((t, i) => {
-            const $item = $('<div class="dropdown-item"></div>').text(t);
+            const $item = $('<div class="dropdown-item"></div>').text(t?.ticker);
             $item.attr('data-index', i);
             $dropdown.append($item);
         });
@@ -36,7 +36,7 @@ async function validateTicker(
             return;
         }
 
-        const matches = allTickerInstance?.search(cleaned) || [];
+        const matches = allTickerInstance?.search(cleaned);
         if (!matches.length) {
             $dropdown.hide();
             return;
