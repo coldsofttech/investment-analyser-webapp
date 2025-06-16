@@ -27,7 +27,12 @@
 
 <script>
     let fullTickerData = [];
+
     const safeId = (str) => btoa(str).replace(/[^a-z0-9]/gi, '');
+
+    function filtersChanged() {
+        document.dispatchEvent(new Event('filtersChanged'));
+    }
 
     async function loadTopFilter() {
         const $input = $('#top');
@@ -42,13 +47,13 @@
         $input.off('input').on('input', () => {
             const val = Math.min(50, Math.max(1, parseInt($input.val() || 1)));
             syncTop(val);
-            document.dispatchEvent(new Event('filtersChanged'));
+            filtersChanged();
         });
 
         $slider.off('input').on('input', () => {
             const val = parseInt($slider.val());
             syncTop(val);
-            document.dispatchEvent(new Event('filtersChanged'));
+            filtersChanged();
         });
     }
 
@@ -77,10 +82,18 @@
         }
 
         const sectionId = `${property}Menu`;
+        const clearBtnId = `${property}ClearBtn`;
         const section = $(`
             <div class="mb-3">
-                <label class="form-label"><strong>${title}:</strong></label>
-                <div id="${sectionId}" class="ps-2"></div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <label class="form-label"><strong>${title}:</strong></label>
+                    <div>
+                        <button type="button" id="${clearBtnId}" class="btn btn-sm text-danger" title="Clear">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="${sectionId}" class="ps-2" style="max-height: 200px; overflow-y: auto;"></div>
             </div>
         `);
         $container.append(section);
@@ -97,6 +110,11 @@
             `;
             $menu.append(item);
         }
+
+        section.find(`#${clearBtnId}`).on('click', () => {
+            section.find('input[type=checkbox]').prop('checked', false);
+            filtersChanged();
+        });
     }
 
     async function loadRangeFilter({ property, title, min, max, step }, defaultMin = min, defaultMax = max) {
@@ -150,20 +168,20 @@
         });
 
         $slider.on('change', () => {
-            document.dispatchEvent(new Event('filtersChanged'));
+            filtersChanged();
         });
 
         $minInput.on('input', () => {
             const minVal = Math.max(min, Math.min(parseFloat($minInput.val() || min), max));
             const maxVal = Math.max(min, Math.min(parseFloat($maxInput.val() || max), max));
             $slider.set([minVal, maxVal]);
-            document.dispatchEvent(new Event('filtersChanged'));
+            filtersChanged();
         });
         $maxInput.on('input', () => {
             const minVal = Math.max(min, Math.min(parseFloat($minInput.val() || min), max));
             const maxVal = Math.max(min, Math.min(parseFloat($maxInput.val() || max), max));
             $slider.set([minVal, maxVal]);
-            document.dispatchEvent(new Event('filtersChanged'));
+            filtersChanged();
         });
     }
 
@@ -225,14 +243,7 @@
         }
     }
 
-    let filterReloading = false;
-
     $('#filterMenus').off('change', 'input[type=checkbox]').on('change', 'input[type=checkbox]', async () => {
-        if (filterReloading) {
-            return;
-        }
-
-        filterReloading = true;
         const currentSelections = await getCurrentFilterSelections();
         const filteredTickers = fullTickerData.filter(ticker => {
             for (const [property, values] of Object.entries(currentSelections)) {
@@ -251,9 +262,7 @@
             return true;
         });
 
-        await loadFilters(filteredTickers, currentSelections);
-        document.dispatchEvent(new Event('filtersChanged'));
-        filterReloading = false;
+        filtersChanged();
     });
 
     $('#resetFilters').on('click', async function() {
@@ -261,14 +270,14 @@
         $('#topRange').val(10);
         $('#filterMenus input[type=checkbox]').prop('checked', false);
         await loadFilters(fullTickerData, {});
-        document.dispatchEvent(new Event('filtersChanged'));
+        filtersChanged();
     });
 
     let useLongTerm = true;
     $('#termToggle').on('change', function() {
         useLongTerm = this.checked;
         $('#termToggleLabel').text(useLongTerm ? 'Long Term' : 'Short Term');
-        document.dispatchEvent(new Event('filtersChanged'));
+        filtersChanged();
     });
 
     async function getCurrentFilterSelections() {
