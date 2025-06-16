@@ -159,12 +159,12 @@
                 document.addEventListener('filtersChanged', async () => {
                     if (typeof window.getFilteredTickers === 'function') {
                         const filteredTickers = window.getFilteredTickers(tickerData.tickers);
-                        await renderSuggestions(filteredTickers);
+                        await renderSuggestions(filteredTickers, useLongTerm);
                     }
                 });
             }
 
-            async function renderSuggestions(tickers) {
+            async function renderSuggestions(tickers, useLongTerm = true) {
                 const $container = $('#suggestions');
                 $container.empty();
 
@@ -174,10 +174,9 @@
                 }
 
                 tickers.forEach(async (t) => {
-                    const shortText = t?.companyDescription.slice(0, 200) || '';
-                    const fullText = t?.companyDescription || '';
-                    const growthClass = t?.longTermCagr > 0 ? 'text-success' : 'text-danger';
-                    const growthSymbol = t?.longTermCagr > 0 ? '+' : '-';
+                    const cagrProp = useLongTerm ? 'longTermCagr' : 'shortTermCagr';
+                    const growthClass = t[cagrProp] > 0 ? 'text-success' : 'text-danger';
+                    const growthSymbol = t[cagrProp] > 0 ? '+' : '';
                     const detailsId = `details-${t?.ticker}`;
                     const card = $(`
                         <div class="suggestion-card card mb-3 shadow-sm">
@@ -190,7 +189,7 @@
                                     </div>
                                 </div>
                                 <div class="text-end">
-                                    <div class="fw-bold fs-5 ${growthClass}">${growthSymbol}${t?.longTermCagr}</div>
+                                    <div class="fw-bold fs-5 ${growthClass}">${growthSymbol}${t[cagrProp]}</div>
                                     <div class="fs-6 text-muted">$ ${t?.currentPrice.toFixed(2)}</div>
                                     <button class="btn btn-sm btn-link toggle-details p-0 mt-1" data-bs-toggle="collapse"
                                             data-bs-target="#${detailsId}" aria-expanded="false">
@@ -237,6 +236,14 @@
                                     </div>
                                     <div class="col-md-6">
                                         <strong>Dividend Frequency: </strong> <span class="text-truncate">${t?.dividendFrequency}</span>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-6">
+                                        <strong>Short Term Growth: </strong> <span class="text-truncate">${await formatPercentage(t?.shortTermCagr)}</span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Long Term Growth: </strong> <span class="text-truncate">${await formatPercentage(t?.longTermCagr)}</span>
                                     </div>
                                 </div>
                                 <div class="row mb-2">
