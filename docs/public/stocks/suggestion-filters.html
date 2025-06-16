@@ -47,7 +47,7 @@
         });
     }
 
-    async function loadCheckboxFilter({ property, title, data = [] }, selectedValues = []) {
+    async function loadCheckboxFilter({ property, title, data = [] }, selectedValues = [], sortFunc = null) {
         if (!data || !Array.isArray(data)) {
             return;
         }
@@ -60,7 +60,13 @@
             values = data.map(t => t[property]).filter(Boolean);
         }
 
-        const uniqueValues = [...new Set(values)].sort((a, b) => a.localeCompare(b));
+        const uniqueValues = [...new Set(values)];
+        if (sortFunc && typeof sortFunc === 'function') {
+            uniqueValues.sort(sortFunc);
+        } else {
+            uniqueValues.sort((a, b) => a.localeCompare(b));
+        }
+
         if (uniqueValues.length === 0) {
             return;
         }
@@ -93,6 +99,10 @@
         await loadTopFilter();
 
         $('#filterMenus').empty();
+        const marketCapOrder = ['Micro (< $300M)', 'Small ($300M - $2B)', 'Mid ($2B - $10B)', 'Large ($10B - $200B)', 'Mega (> $200B)'];
+        const marketCapSort = (a, b) => {
+            return marketCapOrder.indexOf(a) - marketCapOrder.indexOf(b);
+        }
         
         const filterConfigs = [
             { property: 'type', title: 'Type', data: data },
@@ -100,10 +110,15 @@
             { property: 'exchange', title: 'Exchange', data: data },
             { property: 'sector', title: 'Sector', data: data },
             { property: 'industry', title: 'Industry', data: data },
+            { property: 'marketCapBucket', title: 'Market Cap', data: data }
         ];
 
         for (const config of filterConfigs) {
-            await loadCheckboxFilter(config, preserveSelections[config.property] || []);
+            if (config.property === 'marketCapBucket') {
+                await loadCheckboxFilter(config, preserveSelections[config.property] || [], marketCapSort);    
+            } else {
+                await loadCheckboxFilter(config, preserveSelections[config.property] || []);
+            }
         }
     }
 
