@@ -49,6 +49,17 @@ async function getAllTickerInstance() {
             return 'Unknown';
         }
     }
+    const volatilityBucket = (val) => {
+        if (val < 0.15) {
+            return 'Low (< 0.15)';
+        } else if (val >= 0.15 && val < 0.30) {
+            return 'Medium (0.15 - 0.30)';
+        } else if (val >= 0.30) {
+            return 'High (> 0.30)';
+        } else {
+            return 'Unknown';
+        }
+    }
 
     try {
         allTickerInstance = new AllTickers();
@@ -61,6 +72,7 @@ async function getAllTickerInstance() {
         allTickerInstance.tickers.forEach(t => {
             t.marketCapBucket = marketCapBucket(t?.marketCap);
             t.betaBucket = betaBucket(t?.beta);
+            t.volatilityBucket = volatilityBucket(t?.volatility);
         });
     } catch (err) {
         console.warn(`Error loading tickers: ${err.message}`);
