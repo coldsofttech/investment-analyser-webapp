@@ -103,6 +103,11 @@
         const marketCapSort = (a, b) => {
             return marketCapOrder.indexOf(a) - marketCapOrder.indexOf(b);
         }
+
+        const betaOrder = ['Low (< 0.8)', 'Neutral (0.8 - 1.2)', 'High (> 1.2)'];
+        const betaSort = (a, b) => {
+            return betaOrder.indexOf(a) - betaOrder.indexOf(b);
+        }
         
         const filterConfigs = [
             { property: 'type', title: 'Type', data: data },
@@ -110,12 +115,15 @@
             { property: 'exchange', title: 'Exchange', data: data },
             { property: 'sector', title: 'Sector', data: data },
             { property: 'industry', title: 'Industry', data: data },
-            { property: 'marketCapBucket', title: 'Market Cap', data: data }
+            { property: 'marketCapBucket', title: 'Market Cap', data: data },
+            { property: 'betaBucket', title: 'Beta', data: data }
         ];
 
         for (const config of filterConfigs) {
             if (config.property === 'marketCapBucket') {
                 await loadCheckboxFilter(config, preserveSelections[config.property] || [], marketCapSort);    
+            } else if (config.property === 'betaBucket') {
+                await loadCheckboxFilter(config, preserveSelections[config.property] || [], betaSort);    
             } else {
                 await loadCheckboxFilter(config, preserveSelections[config.property] || []);
             }
