@@ -224,10 +224,16 @@ class AllTickers {
             return [];
         }
 
-        return this.tickers.filter(t => t.includes(query.toUpperCase()));
+        return this.tickers.filter(t => 
+            t.ticker.includes(query.toUpperCase())
+        );
     }
 
     isValid(tickerCode) {
-        return this.tickers?.includes(tickerCode.toUpperCase()) || false;
+        if (!this.tickers?.length || !tickerCode) {
+            return false;
+        }
+
+        return this.tickers.some(t => t.ticker === tickerCode.toUpperCase());
     }
 }
