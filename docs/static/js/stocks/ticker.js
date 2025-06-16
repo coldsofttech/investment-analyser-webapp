@@ -30,6 +30,22 @@ async function getAllTickerInstance() {
         if (allTickerInstance.error) {
             console.warn(`Error loading tickers: ${allTickerInstance.error.message}`);
         }
+
+        allTickerInstance.tickers.forEach(t => {
+            if (t?.marketCap < 300000000) {
+                t.marketCapBucket = 'Micro (< $300M)';
+            } else if (t?.marketCap >= 300000000 && t?.marketCap < 2000000000) {
+                t.marketCapBucket = 'Small ($300M - $2B)';
+            } else if (t?.marketCap >= 2000000000 && t?.marketCap < 10000000000) {
+                t.marketCapBucket = 'Mid ($2B - $10B)';
+            } else if (t?.marketCap >= 10000000000 && t?.marketCap < 200000000000) {
+                t.marketCapBucket = 'Large ($10B - $200B)';
+            } else if (t?.marketCap >= 200000000000) {
+                t.marketCapBucket = 'Mega (> $200B)';
+            } else {
+                t.marketCapBucket = 'Unknown';
+            }
+        });
     } catch (err) {
         console.warn(`Error loading tickers: ${err.message}`);
     }
