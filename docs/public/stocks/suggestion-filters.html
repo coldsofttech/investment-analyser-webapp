@@ -18,6 +18,10 @@
         </div>
         <input type="range" class="form-range" id="topRange" min="1" max="50" step="1" />
     </div>
+    <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" id="termToggle" checked />
+        <label class="form-check-label" for="termToggle" id="termToggleLabel">Long Term</label>
+    </div>
     <div id="filterMenus" class="mobile-scroll"></div>
 </div>
 
@@ -221,12 +225,26 @@
         }
     }
 
+    let filterReloading = false;
+
     $('#filterMenus').off('change', 'input[type=checkbox]').on('change', 'input[type=checkbox]', async () => {
+        if (filterReloading) {
+            return;
+        }
+
+        filterReloading = true;
         const currentSelections = await getCurrentFilterSelections();
-        const filteredTickers = fullTickerData.filter(t => {
-            for (const [property, value] of Object.entries(currentSelections)) {
-                if (!value.includes(t[property])) {
-                    return false;
+        const filteredTickers = fullTickerData.filter(ticker => {
+            for (const [property, values] of Object.entries(currentSelections)) {
+                if (Array.isArray(values)) {
+                    if (!values.includes(ticker[property])) {
+                        return false;
+                    }
+                } else if (values && 'min' in values && 'max' in values) {
+                    const val = parseFloat(ticker[property]);
+                    if (isNaN(val) || val < values.min || val > values.max) {
+                        return false;
+                    }
                 }
             }
 
@@ -235,6 +253,7 @@
 
         await loadFilters(filteredTickers, currentSelections);
         document.dispatchEvent(new Event('filtersChanged'));
+        filterReloading = false;
     });
 
     $('#resetFilters').on('click', async function() {
@@ -242,6 +261,13 @@
         $('#topRange').val(10);
         $('#filterMenus input[type=checkbox]').prop('checked', false);
         await loadFilters(fullTickerData, {});
+        document.dispatchEvent(new Event('filtersChanged'));
+    });
+
+    let useLongTerm = true;
+    $('#termToggle').on('change', function() {
+        useLongTerm = this.checked;
+        $('#termToggleLabel').text(useLongTerm ? 'Long Term' : 'Short Term');
         document.dispatchEvent(new Event('filtersChanged'));
     });
 
@@ -318,7 +344,10 @@
         const filtered = allTickers
             .filter(t => typeof t?.longTermCagr === 'number' && !isNaN(t?.longTermCagr))
             .filter(matchesFilter)
-            .sort((a, b) => b.longTermCagr - a.longTermCagr)
+            .sort((a, b) => {
+                const cagrProp = useLongTerm ? 'longTermCagr' : 'shortTermCagr';
+                return b[cagrProp] - a[cagrProp];
+            })
             .slice(0, top);
         
         return filtered;
