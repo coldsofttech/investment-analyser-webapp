@@ -66,6 +66,7 @@
         </style>
     </head>
     <body>
+        <div id="scrolltotop-placeholder"></div>
         <div class="container">
             <div id="freeze-pane">
                 <div id="userbar-placeholder"></div>
@@ -80,6 +81,18 @@
                 </div>
             </div>
         </div>
+
+        <footer class="footer mt-5 pt-4 pb-4">
+            <div class="container">
+                <h5 class="mb-3">Key</h5>
+                <ul class="list-unstyled">
+                    <li>The top suggestions listed above are limited to stock tickers available within our database.</li>
+                    <li>Note that your default currency settings do not apply here; most values are displayed in USD unless a different currency symbol is explicitly shown.</li>
+                    <li>Short-Term and Long-Term Growth percentages (CAGR %) are high-level estimates and may differ in detailed reports. Please refer to the full analysis report for precise figures.</li>
+                </ul>
+                <p class="text-muted mt-4">This report is generated using the <strong>Investment Analyser</strong>.</p>
+            </div>
+        </footer>
 
         <script src="https://code.jquery.com/jquery-3.7.1.min.js" 
                 integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" 
@@ -124,6 +137,11 @@
                         selector: '#menu-placeholder',
                         url: '../public/menu.html',
                         eventName: 'menuReady'
+                    },
+                    {
+                        selector: '#scrolltotop-placeholder',
+                        url: '../public/scroll-to-top.html',
+                        eventName: 'scrollToTopReady'
                     }
                 ];
 
@@ -180,24 +198,26 @@
                     const detailsId = `details-${t?.ticker}`;
                     const card = $(`
                         <div class="suggestion-card card mb-3 shadow-sm">
-                            <div class="card-body d-flex align-items-center justify-content-between">
+                            <div class="card-header clickable d-flex align-items-center justify-content-between"
+                                 data-bs-toggle="collapse" data-bs-target="#${detailsId}" aria-expanded="false" 
+                                 style="cursor: pointer;">
                                 <div class="d-flex align-items-center gap-3">
                                     <img src="${await renderLogo(t?.website, t?.companyName)}" class="logo" />
                                     <div>
-                                        <h5 class="mb-1 fw-bold card-title">${t?.companyName}</h5>
+                                        <h5 class="mb-1 fw-bold card-title pe-2">${t?.companyName}</h5>
                                         <h6 class="card-subtitle mb-0 text-muted">${t?.ticker}</h6>
                                     </div>
                                 </div>
                                 <div class="text-end">
-                                    <div class="fw-bold fs-5 ${growthClass}">${growthSymbol}${t[cagrProp]}</div>
-                                    <div class="fs-6 text-muted">$ ${t?.currentPrice.toFixed(2)}</div>
+                                    <div class="fw-bold fs-5 ${growthClass} text-nowrap">${growthSymbol}${t[cagrProp].toFixed(2)}</div>
+                                    <div class="fs-6 text-muted text-nowrap">${await formatCurrency(t?.marketCap, await getCurrency(t?.currency))}</div>
                                     <button class="btn btn-sm btn-link toggle-details p-0 mt-1" data-bs-toggle="collapse"
                                             data-bs-target="#${detailsId}" aria-expanded="false">
                                         <i class="bi bi-chevron-down"></i>
                                     </button>
                                 </div>
                             </div>
-                            <div id="${detailsId}" class="collapse px-3 pb-3">
+                            <div id="${detailsId}" class="card-body collapse px-3 pb-3">
                                 <div class="row mb-2">
                                     <div class="col-md-6">
                                         <strong>Type: </strong> <span class="text-truncate">${t?.type}</span>
@@ -219,7 +239,7 @@
                                         <strong>Industry: </strong> <span class="text-truncate">${t?.industry}</span>
                                     </div>
                                     <div class="col-md-6">
-                                        <strong>Market Cap: </strong> <span class="text-truncate">${await formatCurrency(t?.marketCap, await getCurrency('USD'))}</span>
+                                        <strong>Market Cap: </strong> <span class="text-truncate">${await formatCurrency(t?.marketCap, await getCurrency(t?.currency))}</span>
                                     </div>
                                 </div>
                                 <div class="row mb-2">
@@ -247,6 +267,14 @@
                                     </div>
                                 </div>
                                 <div class="row mb-2">
+                                    <span class="badge bg-secondary">
+                                        <a target="_blank" href="${getRootPath()}stocks/report.html?ticker=${t.ticker}"
+                                           style="color: white; text-decoration: none;">
+                                            Click here for detailed Analysis Report.
+                                        </a>
+                                    </span>
+                                </div>
+                                <div class="row mb-2">
                                     <div class="description">
                                         <strong>Description:</strong>
                                         <span class="short-text">${t?.companyDescription.slice(0, 200)}</span>
@@ -259,7 +287,16 @@
                     `);
 
                     card.find('.toggle-details').on('click', function(e) {
+                        e.stopPropagation();
                         $(this).find('i').toggleClass('bi-chevron-down bi-chevron-up');
+                    });
+
+                    const $collapse = card.find(`#${detailsId}`);
+                    $collapse.on('shown.bs.collapse', () => {
+                        card.find('.toggle-details i').removeClass('bi-chevron-down').addClass('bi-chevron-up');
+                    });
+                    $collapse.on('hidden.bs.collapse', () => {
+                        card.find('.toggle-details i').removeClass('bi-chevron-up').addClass('bi-chevron-down');
                     });
 
                     card.find('.read-more').on('click', function(e) {
