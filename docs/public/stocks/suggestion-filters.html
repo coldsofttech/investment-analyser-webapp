@@ -113,6 +113,11 @@
         const volatilitySort = (a, b) => {
             return volatilityOrder.indexOf(a) - volatilityOrder.indexOf(b);
         }
+
+        const dividendFrequencyOrder = ['Monthly', 'Quarterly', 'Semi-Annually', 'Annually', 'Irregular', 'N/A'];
+        const dividendFrequencySort = (a, b) => {
+            return dividendFrequencyOrder.indexOf(a) - dividendFrequencyOrder.indexOf(b);
+        }
         
         const filterConfigs = [
             { property: 'type', title: 'Type', data: data },
@@ -122,7 +127,8 @@
             { property: 'industry', title: 'Industry', data: data },
             { property: 'marketCapBucket', title: 'Market Cap', data: data },
             { property: 'betaBucket', title: 'Beta', data: data },
-            { property: 'volatilityBucket', title: 'Volatility', data: data }
+            { property: 'volatilityBucket', title: 'Volatility', data: data },
+            { property: 'dividendFrequency', title: 'Dividend Frequency', data: data }
         ];
 
         for (const config of filterConfigs) {
@@ -132,6 +138,8 @@
                 await loadCheckboxFilter(config, preserveSelections[config.property] || [], betaSort);
             } else if (config.property === 'volatilityBucket') {
                 await loadCheckboxFilter(config, preserveSelections[config.property] || [], volatilitySort);
+            } else if (config.property === 'dividendFrequency') {
+                await loadCheckboxFilter(config, preserveSelections[config.property] || [], dividendFrequencySort);
             } else {
                 await loadCheckboxFilter(config, preserveSelections[config.property] || []);
             }
