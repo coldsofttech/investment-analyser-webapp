@@ -210,7 +210,7 @@
                                 </div>
                                 <div class="text-end">
                                     <div class="fw-bold fs-5 ${growthClass} text-nowrap">${growthSymbol}${t[cagrProp].toFixed(2)}</div>
-                                    <div class="fs-6 text-muted text-nowrap">${await formatCurrency(t?.marketCap, await getCurrency(t?.currency))}</div>
+                                    <div class="fs-6 text-muted text-nowrap">${await formatCurrency(t?.currentPrice, await getCurrency(t?.currency))}</div>
                                     <button class="btn btn-sm btn-link toggle-details p-0 mt-1" data-bs-toggle="collapse"
                                             data-bs-target="#${detailsId}" aria-expanded="false">
                                         <i class="bi bi-chevron-down"></i>
