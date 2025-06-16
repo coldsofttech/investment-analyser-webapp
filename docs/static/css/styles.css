@@ -59,8 +59,8 @@ h4.title {
 }
 
 .logo {
-    height: 64px;
-    width: auto;
+    width: 64px;
+    height: auto;
 }
 
 #loading-overlay {
