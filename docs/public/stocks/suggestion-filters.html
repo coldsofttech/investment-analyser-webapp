@@ -23,6 +23,7 @@
 
 <script>
     let fullTickerData = [];
+    const safeId = (str) => btoa(str).replace(/[^a-z0-9]/gi, '');
 
     async function loadTopFilter() {
         const $input = $('#top');
@@ -71,7 +72,6 @@
             return;
         }
 
-        const safeId = (str) => btoa(str).replace(/[^a-z0-9]/gi, '');
         const sectionId = `${property}Menu`;
         const section = $(`
             <div class="mb-3">
@@ -93,7 +93,75 @@
             `;
             $menu.append(item);
         }
-    } 
+    }
+
+    async function loadRangeFilter({ property, title, min, max, step }, defaultMin = min, defaultMax = max) {
+        const $container = $('#filterMenus');
+        const safe = safeId(title);
+        const minInputId = `${property}-min-input-${safe}`;
+        const maxInputId = `${property}-max-input-${safe}`;
+        const sliderId = `${property}-slider-${safe}`;
+
+        const section = $(`
+            <div class="mb-3">
+                <label class="form-label"><strong>${title} %:</strong></label>
+                <div class="d-flex align-items-center justify-content-between mb-2 gap-2">
+                    <input type="number" class="form-control" id="${minInputId}" min="${min}" 
+                           max="${max}" step="${step}" style="width: 70px;" />
+                    <span>to</span>
+                    <input type="number" class="form-control" id="${maxInputId}" min="${min}" 
+                           max="${max}" step="${step}" style="width: 70px;" />
+                </div>
+                <div id="${sliderId}" class="d-flex align-items-center justify-content-between mb-2 gap-2">
+                </div>
+            </div>
+        `);
+
+        $container.append(section);
+
+        const $minInput = $(`#${minInputId}`);
+        const $maxInput = $(`#${maxInputId}`);
+        const $sliderWrapper = $(`#${sliderId}`);
+        const slider = $sliderWrapper[0];
+
+        noUiSlider.create(slider, {
+            start: [defaultMin, defaultMax],
+            connect: true,
+            range: { 'min': min, 'max': max },
+            step: step,
+            tooltips: [false, false],
+            format: {
+                to: value => parseFloat(value).toFixed(0),
+                from: value => parseFloat(value)
+            }
+        });
+        const $slider = slider.noUiSlider;
+        $slider.on('update', function(values, handle) {
+            const val = parseFloat(values[handle]);
+            if (handle === 0) {
+                $minInput.val(val);
+            } else {
+                $maxInput.val(val);
+            }
+        });
+
+        $slider.on('change', () => {
+            document.dispatchEvent(new Event('filtersChanged'));
+        });
+
+        $minInput.on('input', () => {
+            const minVal = Math.max(min, Math.min(parseFloat($minInput.val() || min), max));
+            const maxVal = Math.max(min, Math.min(parseFloat($maxInput.val() || max), max));
+            $slider.set([minVal, maxVal]);
+            document.dispatchEvent(new Event('filtersChanged'));
+        });
+        $maxInput.on('input', () => {
+            const minVal = Math.max(min, Math.min(parseFloat($minInput.val() || min), max));
+            const maxVal = Math.max(min, Math.min(parseFloat($maxInput.val() || max), max));
+            $slider.set([minVal, maxVal]);
+            document.dispatchEvent(new Event('filtersChanged'));
+        });
+    }
 
     async function loadFilters(data, preserveSelections = {}) {
         await loadTopFilter();
@@ -139,6 +207,13 @@
             } else if (config.property === 'volatilityBucket') {
                 await loadCheckboxFilter(config, preserveSelections[config.property] || [], volatilitySort);
             } else if (config.property === 'dividendFrequency') {
+                await loadRangeFilter({
+                    property: 'dividendYield',
+                    title: 'Dividend Yield',
+                    min: 0,
+                    max: 100,
+                    step: 1
+                });
                 await loadCheckboxFilter(config, preserveSelections[config.property] || [], dividendFrequencySort);
             } else {
                 await loadCheckboxFilter(config, preserveSelections[config.property] || []);
@@ -180,6 +255,16 @@
             filters[property].push(this.value);
         });
 
+        $('.noUi-target').each(function() {
+            const slider = this.noUiSlider;
+            const sliderId = $(this).attr('id');
+            const property = sliderId.split('-')[0];
+            if (slider) {
+                const [min, max] = slider.get().map(parseFloat);
+                filters[property] = { min, max };
+            }
+        });
+
         return filters;
     }
 
@@ -203,10 +288,27 @@
             filters[property].add(this.value);
         });
 
+        $('.noUi-target').each(function() {
+            const slider = this.noUiSlider;
+            const sliderId = $(this).attr('id');
+            const property = sliderId.split('-')[0];
+            if (slider) {
+                const [min, max] = slider.get().map(parseFloat);
+                filters[property] = { min, max };
+            }
+        });
+
         const matchesFilter = (ticker) => {
             for (const [property, values] of Object.entries(filters)) {
-                if (!values.has(ticker[property])) {
-                    return false;
+                if (values instanceof Set) {
+                    if (!values.has(ticker[property])) {
+                        return false;
+                    }
+                } else if (typeof values === 'object' && 'min' in values && 'max' in values) {
+                    const val = parseFloat(ticker[property]);
+                    if (isNaN(val) || val < values.min || val > values.max) {
+                        return false;
+                    }
                 }
             }
 
