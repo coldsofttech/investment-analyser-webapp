@@ -1,0 +1,190 @@
+<button class="btn btn-outline-secondary d-md-none mb-2" type="button" data-bs-toggle="collapse"
+        data-bs-target="#filtersCollapse" aria-expanded="false">
+        <i class="bi bi-search me-2"></i> Filter Options
+</button>
+
+<div id="filtersCollapse" class="filters card p-3 shadow-sm rounded bg-light collapse d-md-block">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="title mb-3">Filters</h4>
+        <button id="resetFilters" class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+        </button>
+    </div>
+    <div class="mb-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <label for="top"><strong>Top:</strong></label>
+            <input type="number" class="form-control" name="top" id="top" min="1" max="50" 
+                style="width: 80px;" step="1" />
+        </div>
+        <input type="range" class="form-range" id="topRange" min="1" max="50" step="1" />
+    </div>
+    <div id="filterMenus" class="mobile-scroll"></div>
+</div>
+
+<script>
+    let fullTickerData = [];
+
+    async function loadTopFilter() {
+        const $input = $('#top');
+        const $slider = $('#topRange');
+        const syncTop = (val) => {
+            $input.val(val);
+            $slider.val(val);
+        }
+
+        syncTop(10);
+
+        $input.off('input').on('input', () => {
+            const val = Math.min(50, Math.max(1, parseInt($input.val() || 1)));
+            syncTop(val);
+            document.dispatchEvent(new Event('filtersChanged'));
+        });
+
+        $slider.off('input').on('input', () => {
+            const val = parseInt($slider.val());
+            syncTop(val);
+            document.dispatchEvent(new Event('filtersChanged'));
+        });
+    }
+
+    async function loadCheckboxFilter({ property, title, data = [] }, selectedValues = []) {
+        if (!data || !Array.isArray(data)) {
+            return;
+        }
+
+        const $container = $('#filterMenus');
+        let values;
+        if (typeof data[0] === 'string') {
+            values = data;
+        } else {
+            values = data.map(t => t[property]).filter(Boolean);
+        }
+
+        const uniqueValues = [...new Set(values)].sort((a, b) => a.localeCompare(b));
+        if (uniqueValues.length === 0) {
+            return;
+        }
+
+        const safeId = (str) => btoa(str).replace(/[^a-z0-9]/gi, '');
+        const sectionId = `${property}Menu`;
+        const section = $(`
+            <div class="mb-3">
+                <label class="form-label"><strong>${title}:</strong></label>
+                <div id="${sectionId}" class="ps-2"></div>
+            </div>
+        `);
+        $container.append(section);
+
+        const $menu = section.find(`#${sectionId}`);
+        for (const val of uniqueValues) {
+            const id = `${property}-${safeId(val)}`;
+            const checked = selectedValues.includes(val) ? 'checked' : '';
+            const item = `
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="${id}" value="${val}" ${checked} />
+                    <label for="${id}" class="form-check-label">${val}</label>
+                </div>
+            `;
+            $menu.append(item);
+        }
+    } 
+
+    async function loadFilters(data, preserveSelections = {}) {
+        await loadTopFilter();
+
+        $('#filterMenus').empty();
+        
+        const filterConfigs = [
+            { property: 'type', title: 'Type', data: data },
+            { property: 'country', title: 'Country', data: data },
+            { property: 'exchange', title: 'Exchange', data: data },
+            { property: 'sector', title: 'Sector', data: data },
+            { property: 'industry', title: 'Industry', data: data },
+        ];
+
+        for (const config of filterConfigs) {
+            await loadCheckboxFilter(config, preserveSelections[config.property] || []);
+        }
+    }
+
+    $('#filterMenus').off('change', 'input[type=checkbox]').on('change', 'input[type=checkbox]', async () => {
+        const currentSelections = await getCurrentFilterSelections();
+        const filteredTickers = fullTickerData.filter(t => {
+            for (const [property, value] of Object.entries(currentSelections)) {
+                if (!value.includes(t[property])) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        await loadFilters(filteredTickers, currentSelections);
+        document.dispatchEvent(new Event('filtersChanged'));
+    });
+
+    $('#resetFilters').on('click', async function() {
+        $('#top').val(10);
+        $('#topRange').val(10);
+        $('#filterMenus input[type=checkbox]').prop('checked', false);
+        await loadFilters(fullTickerData, {});
+        document.dispatchEvent(new Event('filtersChanged'));
+    });
+
+    async function getCurrentFilterSelections() {
+        const filters = {};
+        $('#filterMenus input[type=checkbox]:checked').each(function() {
+            const [property] = this.id.split('-', 2);
+            if (!filters[property]) {
+                filters[property] = [];
+            }
+            filters[property].push(this.value);
+        });
+
+        return filters;
+    }
+
+    window.initFilters = async function(tickers) {
+        fullTickerData = tickers;
+        await loadFilters(tickers);
+    }
+
+    window.getFilteredTickers = function(allTickers) {
+        if (!allTickers) {
+            return [];
+        }
+
+        const top = Math.min(50, Math.max(1, parseInt($('#top').val() || 10)));
+        const filters = {};
+        $('#filterMenus input[type=checkbox]:checked').each(function() {
+            const [property, ] = this.id.split('-', 2);
+            if (!filters[property]) {
+                filters[property] = new Set();
+            }
+            filters[property].add(this.value);
+        });
+
+        const matchesFilter = (ticker) => {
+            for (const [property, values] of Object.entries(filters)) {
+                if (!values.has(ticker[property])) {
+                    return false;
+                }
+            }
+
+            return true;
+        };
+
+        const filtered = allTickers
+            .filter(t => typeof t?.longTermCagr === 'number' && !isNaN(t?.longTermCagr))
+            .filter(matchesFilter)
+            .sort((a, b) => b.longTermCagr - a.longTermCagr)
+            .slice(0, top);
+        
+        return filtered;
+    }
+
+    document.addEventListener('suggestionFiltersReady', async function(event) {
+        const detail = event.detail || {};
+        const tickerData = detail.data || [];
+    });
+</script>
