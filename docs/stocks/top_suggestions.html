@@ -194,9 +194,30 @@
                             </div>
                             <div id="${detailsId}" class="collapse px-3 pb-3">
                                 <div class="row mb-2">
-                                    <div class="col-sm-6">
-                                        <strong>Exchange:</strong> ${t?.exchange}
+                                    <div class="col-md-6">
+                                        <strong>Type: </strong> <span class="text-truncate">${t?.type}</span>
                                     </div>
+                                    <div class="col-md-6">
+                                        <strong>Exchange: </strong> <span class="text-truncate">${t?.exchange}</span>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-6">
+                                        <strong>Country: </strong> <span class="text-truncate">${t?.country}</span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Sector: </strong> <span class="text-truncate">${t?.sector}</span>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-6">
+                                        <strong>Industry: </strong> <span class="text-truncate">${t?.industry}</span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Market Cap: </strong> <span class="text-truncate">${await formatCurrency(t?.marketCap, await getCurrency('USD'))}</span>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
                                     <div class="description">
                                         <strong>Description:</strong>
                                         <span class="short-text">${t?.companyDescription.slice(0, 200)}</span>
