@@ -225,14 +225,7 @@
         }
     }
 
-    let filterReloading = false;
-
     $('#filterMenus').off('change', 'input[type=checkbox]').on('change', 'input[type=checkbox]', async () => {
-        if (filterReloading) {
-            return;
-        }
-
-        filterReloading = true;
         const currentSelections = await getCurrentFilterSelections();
         const filteredTickers = fullTickerData.filter(ticker => {
             for (const [property, values] of Object.entries(currentSelections)) {
@@ -251,9 +244,7 @@
             return true;
         });
 
-        await loadFilters(filteredTickers, currentSelections);
         document.dispatchEvent(new Event('filtersChanged'));
-        filterReloading = false;
     });
 
     $('#resetFilters').on('click', async function() {
