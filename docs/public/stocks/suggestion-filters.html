@@ -27,6 +27,8 @@
 
 <script>
     let fullTickerData = [];
+    let topDefault = 10;
+    let topMax = 1000;
 
     const safeId = (str) => btoa(str).replace(/[^a-z0-9]/gi, '');
 
@@ -36,16 +38,18 @@
 
     async function loadTopFilter() {
         const $input = $('#top');
+        $input.attr('max', topMax);
         const $slider = $('#topRange');
+        $slider.attr('max', topMax);
         const syncTop = (val) => {
             $input.val(val);
             $slider.val(val);
         }
 
-        syncTop(10);
+        syncTop(topDefault);
 
         $input.off('input').on('input', () => {
-            const val = Math.min(50, Math.max(1, parseInt($input.val() || 1)));
+            const val = Math.min(topMax, Math.max(1, parseInt($input.val() || 1)));
             syncTop(val);
             filtersChanged();
         });
@@ -221,6 +225,12 @@
             { property: 'dividendFrequency', title: 'Dividend Frequency', data: data }
         ];
 
+        const divYieldMax = Math.max(
+            ...data
+                .map(d => d?.dividendYield)
+                .filter(y => typeof y === 'number' && !isNaN(y))
+        );
+
         for (const config of filterConfigs) {
             if (config.property === 'marketCapBucket') {
                 await loadCheckboxFilter(config, preserveSelections[config.property] || [], marketCapSort);
@@ -233,7 +243,7 @@
                     property: 'dividendYield',
                     title: 'Dividend Yield',
                     min: 0,
-                    max: 100,
+                    max: divYieldMax,
                     step: 1
                 });
                 await loadCheckboxFilter(config, preserveSelections[config.property] || [], dividendFrequencySort);
@@ -266,8 +276,8 @@
     });
 
     $('#resetFilters').on('click', async function() {
-        $('#top').val(10);
-        $('#topRange').val(10);
+        $('#top').val(topDefault);
+        $('#topRange').val(topDefault);
         $('#filterMenus input[type=checkbox]').prop('checked', false);
         await loadFilters(fullTickerData, {});
         filtersChanged();
@@ -313,7 +323,7 @@
             return [];
         }
 
-        const top = Math.min(50, Math.max(1, parseInt($('#top').val() || 10)));
+        const top = Math.min(topMax, Math.max(1, parseInt($('#top').val() || topDefault)));
         const filters = {};
         $('#filterMenus input[type=checkbox]:checked').each(function() {
             const [property, ] = this.id.split('-', 2);

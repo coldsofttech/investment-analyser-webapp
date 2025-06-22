@@ -592,7 +592,16 @@ input:checked + .slider:before {
     }
 
     .logo {
-        height: 40px;
+        width: 40px;
+        height: auto;
+    }
+
+    .card-title {
+        font-size: 1rem;
+    }
+
+    .card-subtitle {
+        font-size: 0.85rem;
     }
 
     #loading-overlay {
