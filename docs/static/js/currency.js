@@ -1,5 +1,6 @@
 const currencies = [
     { currency: 'GBP', symbol: '£', icon: 'bi-currency-pound' },
+    { currency: 'GBp', symbol: 'p', icon: '' },
     { currency: 'USD', symbol: '$', icon: 'bi-currency-dollar' },
     { currency: 'EUR', symbol: '€', icon: 'bi-currency-euro' },
     { currency: 'INR', symbol: '₹', icon: 'bi-currency-rupee' }
