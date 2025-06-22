@@ -66,6 +66,7 @@
         </style>
     </head>
     <body>
+        <div id="loading-placeholder"></div>
         <div id="scrolltotop-placeholder"></div>
         <div class="container">
             <div id="freeze-pane">
@@ -77,7 +78,9 @@
             <div class="form">
                 <div class="row padding">
                     <div class="col-md-4" id="filters-placeholder"></div>
-                    <div class="col-md-8" id="suggestions"></div>
+                    <div class="col-md-8" id="suggestions">
+                        <div id="suggestionAccordion"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -114,6 +117,15 @@
             $(async function() {
                 const htmlFragments = [
                     {
+                        selector: '#loading-placeholder',
+                        url: '../public/loading.html',
+                        eventType: 'CustomEvent',
+                        eventName: 'loadingOverlayReady',
+                        detail: {
+                            message: 'Suggestions for Top Stocks is loading. Hang tight! If it takes too long, just refresh the page...'
+                        }
+                    },
+                    {
                         selector: '#error-placeholder',
                         url: '../public/error.html',
                         eventName: 'errorReady'
@@ -145,8 +157,16 @@
                     }
                 ];
 
-                await loadAllFragments(htmlFragments);
-                await initPage();
+                $('#loading-overlay').show();
+
+                try {
+                    await loadAllFragments(htmlFragments);
+                    await initPage();
+                } catch (err) {
+                    console.warn(err);
+                } finally {
+                    $('#loading-overlay').hide();
+                }
             });
 
             async function initPage() {
@@ -183,7 +203,7 @@
             }
 
             async function renderSuggestions(tickers, useLongTerm = true) {
-                const $container = $('#suggestions');
+                const $container = $('#suggestionAccordion');
                 $container.empty();
 
                 if (!tickers || tickers.length === 0) {
@@ -196,6 +216,18 @@
                     const growthClass = t[cagrProp] > 0 ? 'text-success' : 'text-danger';
                     const growthSymbol = t[cagrProp] > 0 ? '+' : '';
                     const detailsId = `details-${t?.ticker}`;
+
+                    const buyRecommendation = (down, cagr) => {
+                        if (down && cagr >= 5) {
+                            return `
+                                <button type="button" class="btn btn-custom-blue recom-btn">
+                                    <i class="bi bi-patch-check-fill"></i>
+                                </button>
+                            `;
+                        } else {
+                            return '';
+                        }
+                    }
                     const card = $(`
                         <div class="suggestion-card card mb-3 shadow-sm">
                             <div class="card-header clickable d-flex align-items-center justify-content-between"
@@ -217,7 +249,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <div id="${detailsId}" class="card-body collapse px-3 pb-3">
+                            <div id="${detailsId}" class="card-body collapse px-3 pb-3" data-bs-parent="#suggestionAccordion">
                                 <div class="row mb-2">
                                     <div class="col-md-6">
                                         <strong>Type: </strong> <span class="text-truncate">${t?.type}</span>
@@ -267,19 +299,12 @@
                                     </div>
                                 </div>
                                 <div class="row mb-2">
-                                    <span class="badge bg-secondary">
-                                        <a target="_blank" href="${getRootPath()}stocks/report.html?ticker=${t.ticker}"
-                                           style="color: white; text-decoration: none;">
-                                            Click here for detailed Analysis Report.
-                                        </a>
-                                    </span>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="description">
-                                        <strong>Description:</strong>
-                                        <span class="short-text">${t?.companyDescription.slice(0, 200)}</span>
-                                        <span class="full-text d-none">${t?.companyDescription}</span>
-                                        <a href="#" class="read-more">Read more...</a>
+                                    <div class="col-md-12 text-right">
+                                        ${buyRecommendation(t?.isDowngrading, t[cagrProp])}
+                                        <button type="button" id="btn-${t?.ticker}" class="btn btn-custom-blue analyse-btn" 
+                                                title="Analyse" data-ticker="${t?.ticker}">
+                                            <i class="bi bi-clipboard2-data me-md-0 me-0"></i>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -317,6 +342,15 @@
                     });
 
                     $container.append(card);
+                });
+                
+                $('#suggestions').on('click', '.analyse-btn', function(e) {
+                    e.preventDefault();
+                    const ticker = $(this).data('ticker');
+                    if (ticker) {
+                        const url = `${getRootPath()}stocks/report.html?ticker=${encodeURIComponent(ticker)}`;
+                        window.open(url, "_blank");
+                    }
                 });
             }
         </script>
