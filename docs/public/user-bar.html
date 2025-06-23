@@ -1,0 +1,95 @@
+<nav class="navbar navbar-expand-lg py-1" style="font-size: 0.8rem; line-height: 1;">
+    <div id="userBar" class="container-fluid justify-content-end align-items-center gap-1">
+        <div id="userBarLoginContainer">
+            <a href="#" id="login" class="d-flex align-items-center text-decoration-none navbar-text mb-0">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Login
+            </a>
+        </div>
+        <div id="userBarDropDownContainer" class="dropdown d-none">
+            <a href="#" class="dropdown-toggle text-decoration-none navbar-text mb-0" id="userBarMobileMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                <span id="userAvatar"></span>
+                Hello, <strong id="userInfo">User</strong>!
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userBarMobileMenu" style="font-size: 0.8rem;">
+                <li>
+                    <a class="dropdown-item" href="#" id="defaultCurrency">
+                        <i class="bi bi-cash me-2" id="defaultCurrencySymbol" style="cursor: pointer;"></i>Change Currency
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="#" id="logout">
+                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="modal fade" id="defaultCurrencyModal" tabindex="-1" aria-labelledby="currencyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="currencyModalLabel">Select Your Currency</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <select id="defaultCurrencyList" class="form-select"></select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-custom-blue" id="saveDefaultCurrency">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('userBarReady', async function() {
+        const pathName = window.location.pathname;
+        const appRootPath = getRootPath();
+        const isIndexPage = (pathName === appRootPath || pathName === `${appRootPath}index.html`);
+
+        const $loginContainer = $('#userBarLoginContainer');
+        const $userContainer = $('#userInfo');
+        const $dropdownContainer = $('#userBarDropDownContainer');
+        const $userAvatar = $('#userAvatar');
+
+        if (isIndexPage) {
+            $dropdownContainer.addClass('d-none');
+            $loginContainer.removeClass('d-none');
+
+            await configureAuth0Client();
+            updateAuth0UI();
+            await initLoginButton();
+        } else {
+            await verifyAuth0Authentication();
+            await initLogoutButton();
+
+            const isAuthenticated = await isAuth0Authenticated();
+            if (isAuthenticated) {
+                const user = await getAuth0UserInfo();
+                $userContainer.text(user.name);
+                $dropdownContainer.removeClass('d-none');
+                $loginContainer.addClass('d-none');
+
+                if (user.picture) {
+                    const img = document.createElement('img');
+                    img.src = user.picture;
+                    img.alt = user.name;
+                    img.className = 'rounded-circle';
+                    img.style.width = '15px';
+                    img.style.height = '15px';
+                    img.style.objectFit = 'cover';
+                    $userAvatar.append(img);
+                } else {
+                    $userAvatar.html('<i class="bi bi-person-circle me-2"></i>');
+                }
+
+                await getDefaultCurrency();
+            } else {
+                $dropdownContainer.addClass('d-none');
+                $loginContainer.removeClass('d-none');
+            }
+        }
+    });
+</script>

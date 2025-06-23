@@ -1,0 +1,85 @@
+<div class="row padding">
+    <div class="col-md-4">
+        <label for="ticker">Ticker</label>
+        <i class="optional-text">(Symbol, like NVDA for Nvidia)</i>
+    </div>
+    <div class="col-md-8">
+        <div class="input-group position-relative">
+            <input type="hidden" id="rowIndex">
+            <input type="text" class="form-control" name="ticker" id="ticker" placeholder="Ticker" 
+                   pattern="^[A-Z0-9.]+$" title="Only uppercase letters, numbers, and '.' are allowed." 
+                   autocomplete="off" required>
+            <i class="input-group-text bi bi-alphabet-uppercase"></i>
+            <div id="tickerSuggestions" class="dropdown-menu show w-100" style="display: none; position: absolute; top: 100%; left: 0; z-index: 1000;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="row padding d-none" id="stocksOwned-container">
+    <div class="col-md-4">
+        <label for="stocksOwned">Stocks Owned</label>
+        <i class="optional-text">(Optional, number of stocks owned)</i>
+    </div>
+    <div class="col-md-8">
+        <div class="input-group">
+            <input type="number" class="form-control" name="stocksOwned" id="stocksOwned" step="any" 
+                   placeholder="0.00" autocomplete="off">
+            <i class="input-group-text bi bi-123"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row padding d-none" id="percentage-container">
+    <div class="col-md-4">
+        <label for="percentage">Allocation %</label>
+        <i class="optional-text">(% of Stocks Allocation in a Pie)</i>
+    </div>
+    <div class="col-md-8">
+        <div class="input-group">
+            <input type="number" class="form-control" name="percentage" id="percentage" step="any"
+                   placeholder="0.00" min="0" max="100" autocomplete="off">
+            <i class="input-group-text bi bi-percent"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row padding">
+    <div class="col-md-4">
+        <label for="avgPrice">Average Price</label>
+        <i class="optional-text" id="avgPrice-content"></i>
+    </div>
+    <div class="col-md-8">
+        <div class="input-group">
+            <input type="currency" class="form-control" name="avgPrice" id="avgPrice" step="0.01" 
+                   placeholder="0.00" autocomplete="off">
+            <i class="input-group-text bi bi-cash" id="currencySymbol"></i>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('tickerInputFormReady', async function(event) {
+        const detail = event.detail || {};
+        const byPercentage = detail.byPercentage || false;
+        let avgPriceContent = '';
+
+        if (byPercentage) {
+            document.getElementById('percentage-container').classList.remove('d-none');
+            document.getElementById('stocksOwned-container').classList.add('d-none');
+            avgPriceContent = `
+                (Optional, if value is not provided, will pick up the last close price, in <span id="currency"></span>)
+            `;
+        } else {
+            document.getElementById('percentage-container').classList.add('d-none');
+            document.getElementById('stocksOwned-container').classList.remove('d-none');
+            avgPriceContent = `
+                (Required if Stocks Owned is provided, in <span id="currency"></span>)
+            `;
+        }
+
+        $('#avgPrice-content').html(avgPriceContent);
+        await getDefaultCurrency(customCurrency = '#currency', customSymbol = '#currencySymbol');
+
+        await validateTicker('#ticker');
+    });
+</script>

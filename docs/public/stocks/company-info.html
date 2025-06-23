@@ -1,0 +1,200 @@
+<h2 class="title">
+    <i class="bi bi-buildings me-md-0 me-0"></i>
+    Company Information
+</h2>
+<div class="row d-none" id="company-info-single">
+    <div class="col-md-6">
+        <ul class="details-list">
+            <li class="d-flex justify-content-between">
+                <strong>Exchange:</strong> <span id="exchange" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Industry:</strong> <span id="industry" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Sector:</strong> <span id="sector" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Website:</strong> <a target="_blank" id="website" class="text-right"></a>
+            </li>
+            <li id="stocksOwnedContainer" class="d-flex justify-content-between">
+                <strong>Stocks Owned:</strong> <span id="stocksOwned" class="text-right"></span>
+            </li>
+            <li id="avgPriceContainer" class="d-flex justify-content-between">
+                <strong>Avg. Price:</strong> <span id="avgPrice" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Current Price:</strong> <span id="currentPrice" class="text-right"></span>
+            </li>
+        </ul>
+    </div>
+    <div class="col-md-6">
+        <ul class="details-list">
+            <li class="d-flex justify-content-between">
+                <strong>Type:</strong> <span id="type" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Market Cap:</strong> <span id="marketCap" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Dividend Yield:</strong> <span id="dividendYield" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Dividend Payout Ratio:</strong> <span id="dividendPayoutRatio" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Dividend Frequency:</strong> <span id="dividendFrequency" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Volatility:</strong> <span id="volatility" class="text-right"></span>
+            </li>
+            <li class="d-flex justify-content-between">
+                <strong>Beta:</strong> <span id="beta" class="text-right"></span>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="row d-none" id="company-info-multi">
+    <div id="companyTableDesktopView">
+        <table id="companyTable" class="display dataTable">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Ticker</th>
+                    <th>Company Name</th>
+                    <th>Exchange</th>
+                    <th>Industry</th>
+                    <th>Sector</th>
+                    <th class="text-right">Stocks Owned</th>
+                    <th class="text-right">Avg. Price</th>
+                    <th class="text-right">Total Price</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div id="companyTableMobileView" class="accordion"></div>
+</div>
+
+<script>
+    document.addEventListener('companyInfoReady', async function(event) {
+        const detail = event.detail || {};
+        const pie = detail.pie || false;
+        const defaultCurrency = detail.defaultCurrency;
+
+        if (!pie) {
+            const $stocksOwnedContainer = $('#stocksOwnedContainer');
+            const $avgPriceContainer = $('#avgPriceContainer');
+            const info = detail.info;
+            const fxRate = detail.fxRate;
+            const stocksOwned = detail.stocksOwned;
+            const avgPrice = detail.avgPrice;
+            const priceInfo = detail.priceInfo;
+
+            if (info) {
+                const setText = (id, text) => {
+                    const $element = $(`#${id}`);
+                    const $container = $element.closest('li');
+                    const isValid = text !== null && text !== undefined && text !== '';
+
+                    if (isValid) {
+                        $element.text(text);
+                        $container.removeClass('d-none');
+                    } else {
+                        $container.addClass('d-none');
+                    }
+                };
+                const setAttr = (id, attr, value) => $(`#${id}`).attr(attr, value);
+                const formatOrNA = (val, formatFn) => val !== null && val !== undefined ? formatFn(val) : 'N/A';
+                const setVisible = ($selector, isVisible, showClass = 'd-flex', hideClass = 'd-none') => {
+                    $selector.toggleClass(hideClass, !isVisible).toggleClass(showClass, isVisible);
+                }
+
+                setText('exchange', info?.exchange);
+                setText('industry', info?.industry);
+                setText('sector', info?.sector);
+                setText('website', await truncWebsite(info?.website));
+                setAttr('website', 'href', info?.website);
+                setAttr('website', 'aria-label', `Visit ${info?.companyName} website.`);
+                setText('type', info?.type);
+                setText('dividendYield', await formatOrNA(info?.dividendYield, formatPercentage));
+                setText('dividendPayoutRatio', await formatOrNA(info?.payoutRatio, formatPercentage));
+                setText('dividendFrequency', info?.dividendFrequency ?? 'N/A');
+                setText('volatility', await formatOrNA(info?.volatility, formatPercentage));
+                setText('beta', info?.beta ? info?.beta?.toFixed(2) : 0);
+                setText('marketCap', await formatCurrency(info?.marketCap * fxRate, defaultCurrency, true));
+                setText('currentPrice', await formatCurrency(priceInfo?.currentPrice * fxRate, defaultCurrency, true));
+
+                if (stocksOwned > 0) {
+                    setVisible($stocksOwnedContainer, true);
+                    setVisible($avgPriceContainer, true);
+                    setText('stocksOwned', stocksOwned);
+                    setText('avgPrice', await formatCurrency(avgPrice, defaultCurrency, true));
+                } else {
+                    setVisible($stocksOwnedContainer, false);
+                    setVisible($avgPriceContainer, false);
+                }
+            }
+
+            document.getElementById('company-info-single').classList.remove('d-none');
+            document.getElementById('company-info-multi').classList.add('d-none');
+        } else {
+            const data = detail.data;
+
+            const processedData = await Promise.all(data.map(async (row) => {
+                const formatC = async (val) => val === null ? 'N/A' : await formatCurrency(val, defaultCurrency);
+                const formatP = async (val) => val === null ? 'N/A' : await formatPercentage(val);
+                const colorClass = (val, threshold) => isNaN(val) || val === null ? 'color-na' : val >= threshold ? 'color-pos' : 'color-neg';
+
+                return {
+                    logo: `<img id="logo-${row.tickerCode}" class="logo" src="${await renderLogo(await truncWebsite(row.info?.website), row.info?.companyName)}" style="width: 32px; height: 32px;" />`,
+                    ticker: `<a target="_blank" href="${getRootPath()}stocks/report.html?ticker=${row.tickerCode}&stocksOwned=${row.stocksOwned}&avgPrice=${row.avgPrice}">${row.tickerCode}</a>`,
+                    companyName: `<span>${row.info?.companyName}</span>`,
+                    type: `<span>${row.info?.type}</span>`,
+                    exchange: `<span>${row.info?.exchange}</span>`,
+                    industry: `<span>${row.info?.industry}</span>`,
+                    sector: `<span>${row.info?.sector}</span>`,
+                    stocksOwned: `<span>${row.stocksOwned}</span>`,
+                    avgPrice: `<span>${await formatCurrency(parseFloat(row.avgPrice), defaultCurrency)}</span>`,
+                    currentPrice: `<span>${await formatCurrency(parseFloat(row.currentPrice), defaultCurrency)}</span>`,
+                    totalPrice: `<span>${await formatCurrency(parseFloat(row.stocksOwned * row.avgPrice), defaultCurrency)}</span>`
+                };
+            }));
+
+            const columns = [
+                { data: 'logo', title: null },
+                { data: 'ticker', title: 'Ticker' },
+                { data: 'companyName', title: 'Company Name' },
+                { data: 'type', title: 'Type' },
+                { data: 'exchange', title: 'Exchange' },
+                { data: 'industry', title: 'Industry' },
+                { data: 'sector', title: 'Sector' },
+                { data: 'stocksOwned', title: 'Stocks Owned' },
+                { data: 'avgPrice', title: 'Avg. Price' },
+                { data: 'currentPrice', title: 'Current Price' },
+                { data: 'totalPrice', title: 'Total Price' },
+            ];
+
+            await renderDataTable({
+                selector: $('#companyTable'),
+                data: processedData,
+                columns: columns,
+                rightAlignColumns: [7, 8, 9],
+                hiddenColumns: [],
+                sortable: true,
+                scrollX: true,
+            });
+
+            await renderDataTableMobileView({
+                elementId: '#companyTableMobileView',
+                data: processedData,
+                columns: columns,
+                titleFields: ['logo', 'companyName'],
+                hiddenFields: []
+            });
+
+            document.getElementById('company-info-single').classList.add('d-none');
+            document.getElementById('company-info-multi').classList.remove('d-none');
+        }
+    });
+</script>

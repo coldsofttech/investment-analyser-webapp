@@ -1,0 +1,82 @@
+<nav class="navbar navbar-expand-lg navbar-light custom-breadcrumb mt-3 mb-4">
+    <div class="container-fluid">
+        <a id="nav-menu" class="navbar-brand">Menu</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" 
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse navbar-mobile" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" 
+                       aria-expanded="false">Stocks Analyser</a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li>
+                            <a id="nav-stocks-input" class="dropdown-item">
+                                <i class="bi bi-graph-up"></i><span class="padding">Stocks</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a id="nav-stocks-top-suggestions" class="dropdown-item">
+                                <i class="bi bi-star"></i><span class="padding">Top Stocks</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi bi-pie-chart"></i><span class="padding">Pie <i>(Portfolios)</i></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a id="nav-pies-new" class="dropdown-item" href="#"><span class="padding-extra">New Pie</span></a>
+                        </li>
+                        <li>
+                            <a id="nav-pies-load" class="dropdown-item" href="#"><span class="padding-extra">Load Pie</span></a>
+                            <input type="file" id="nav-pies-load-file" accept=".json" class="d-none" />
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<script>
+    document.addEventListener('menuReady', async function() {
+        const appRootPath = getRootPath();
+        const links = {
+            'nav-menu': 'menu.html',
+            'nav-stocks-input': 'stocks/input.html',
+            'nav-stocks-top-suggestions': 'stocks/top_suggestions.html',
+            'nav-pies-new': 'stocks/pies/input.html'
+        };
+
+        for (const [id, path] of Object.entries(links)) {
+            $(`#${id}`).attr('href', `${appRootPath}${path}`);
+        }
+
+        $('#nav-pies-load').on('click', function(e) {
+            e.preventDefault();
+            $('#nav-pies-load-file').click();
+        });
+
+        $('#nav-pies-load-file').on('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.name.endsWith('.json')) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    try {
+                        const uniqueId = crypto.randomUUID();
+                        sessionStorage.setItem(uniqueId, evt.target.result);
+                        setTimeout(() => {
+                            window.location.href = `${getRootPath()}stocks/pies/report.html?id=${uniqueId}`
+                        }, 500);
+                    } catch(err) {
+                        displayError(err.message);
+                    }
+                };
+
+                reader.readAsText(file);
+            }
+        });
+    });
+</script>

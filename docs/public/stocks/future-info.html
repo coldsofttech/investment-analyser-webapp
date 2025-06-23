@@ -1,0 +1,82 @@
+<h2 class="title">
+    <i class="bi bi-binoculars me-md-0 me-0"></i>
+    Future Forecast
+</h2>
+<div class="row">
+    <div id="forecastTableDesktopView">
+        <table id="forecastTable" class="display dataTable">
+            <thead>
+                <tr>
+                    <th style="display: none;">Index</th>
+                    <th>Period</th>
+                    <th class="text-right">Forecast Price</th>
+                    <th class="text-right">Growth %</th>
+                    <th class="text-right">CAGR %</th>
+                    <th class="text-right">Dividend CAGR %</th>
+                    <th class="text-right">Total Returns CAGR %</th>
+                    <th class="text-right">Price Return %</th>
+                    <th class="text-right">Total Returns</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div id="forecastTableMobileView" class="accordion"></div>
+</div>
+
+<script>
+    document.addEventListener('futureForecastReady', async function(event) {
+        const pie = event.detail?.pie || false;
+        const data = event.detail?.data;
+        const avgPrice = event.detail?.avgPrice;
+        const defaultCurrency = event.detail?.defaultCurrency;
+
+        const processedData = await Promise.all(data.map(async (row) => {
+            const formatC = async (val) => val === null ? 'N/A' : await formatCurrency(val, defaultCurrency);
+            const formatP = async (val) => val === null ? 'N/A' : await formatPercentage(val);
+            const colorClass = (val, threshold) => isNaN(val) || val === null ? 'color-na' : val >= threshold ? 'color-pos' : 'color-neg';
+
+            return {
+                ...row,
+                forecastPriceFormatted: `<span class="${colorClass(row.forecastPrice, avgPrice)}">${await formatC(row.forecastPrice)}</span>`,
+                growthFormatted: `<span class="${colorClass(row.growth, 0)}">${await formatP(row.growth)}</span>`,
+                cagrFormatted: `<span class="${colorClass(row.cagr, 0)}">${await formatP(row.cagr)}</span>`,
+                dividendCagrFormatted: `<span class="${colorClass(row.dividendCagr, 0)}">${await formatP(row.dividendCagr)}</span>`,
+                totalReturnsCagrFormatted: `<span class="${colorClass(row.totalReturnsCagr, 0)}">${await formatP(row.totalReturnsCagr)}</span>`,
+                priceReturnGrowthFormatted: `<span class="${colorClass(row.priceReturnGrowth, 0)}">${await formatP(row.priceReturnGrowth)}</span>`,
+                totalReturnsFormatted: `<span class="${colorClass(row.totalReturns, 0)}">${await formatC(row.totalReturns, defaultCurrency)}</span>`
+            };
+        }));
+
+        const columns = [
+            { data: 'index', title: 'Index' },
+            { data: 'period', title: 'Period' },
+            { data: 'forecastPriceFormatted', title: 'Forecast Price' },
+            { data: 'growthFormatted', title: 'Growth %' },
+            { data: 'cagrFormatted', title: 'CAGR %' },
+            { data: 'dividendCagrFormatted', title: 'Dividend CAGR %' },
+            { data: 'totalReturnsCagrFormatted', title: 'Total Returns CAGR %' },
+            { data: 'priceReturnGrowthFormatted', title: 'Price Return %' },
+            { data: 'totalReturnsFormatted', title: 'Total Returns' }
+        ];
+
+        await renderDataTable({
+            selector: $('#forecastTable'),
+            data: processedData,
+            columns: columns,
+            rightAlignColumns: [2, 3, 4, 5, 6, 7, 8],
+            hiddenColumns: avgPrice > 0
+                ? (pie ? [0, 2] : [0])
+                : [0, 7, 8] 
+        });
+
+        await renderDataTableMobileView({
+            elementId: '#forecastTableMobileView',
+            data: processedData,
+            columns: columns,
+            titleFields: ['period', 'totalReturnsCagrFormatted'],
+            hiddenFields: avgPrice > 0
+                ? (pie ? ['index', 'forecastPriceFormatted'] : ['index'])
+                : ['index', 'priceReturnGrowthFormatted', 'totalReturnsFormatted']
+        });
+    });
+</script>

@@ -1,0 +1,11 @@
+<div class="row" style="visibility: unset;">
+    <div class="col-md-12" id="errorMessageContainer">
+        <div class="alert alert-danger" role="alert" id="errorMessage"></div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('errorReady', async function() {
+        await loadError();
+    });
+</script>

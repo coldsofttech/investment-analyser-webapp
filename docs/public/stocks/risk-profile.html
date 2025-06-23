@@ -1,0 +1,12 @@
+<div class="risk-level" id="risk-level">
+    <strong>Risk:</strong> <span id="risk-profile"></span>
+</div>
+
+<script>
+    document.addEventListener('riskProfileReady', async function(event) {
+        const data = event.detail?.data;
+
+        $('#risk-profile').text(data?.overallRisk);
+        $('#risk-level').attr('class', `risk-level ${data?.overallRisk.replace(' ', '-').toLowerCase()}`);
+    });
+</script>

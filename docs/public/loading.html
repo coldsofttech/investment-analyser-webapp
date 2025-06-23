@@ -1,0 +1,14 @@
+<div id="loading-overlay">
+    <div class="spinner-border text-primary" role="status"></div>
+    <span class="message" id="loading-overlay-message">Loading...</span>
+</div>
+
+<script>
+    document.addEventListener('loadingOverlayReady', async function(event) {
+        const message = event.detail?.message;
+
+        if (message) {
+            $('#loading-overlay-message').text(message);
+        }
+    });
+</script>

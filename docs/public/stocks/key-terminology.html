@@ -1,0 +1,49 @@
+<footer class="footer mt-5 pt-4 pb-4">
+    <div class="container">
+        <h5 class="mb-3">Key Terminology</h5>
+        <ul class="list-unstyled">
+            <li><strong>Period:</strong> The historical or forecasted time frame over which performance is being measured (e.g., 1 month, 1 year, 10 years).</li>
+            <li><strong>Total Growth %:</strong> The cumulative percentage increase in the stock price over the given period. It shows the overall growth but not annualised.</li>
+            <li><strong>CAGR %:</strong> <strong>Compound Annual Growth Rate</strong> of the stock's price over the period. It represents the average yearly growth rate assuming compounding.</li>
+            <li><strong>Dividend CAGR %:</strong> The CAGR of dividends over the same period. It reflects how fast dividends have grown annually with reinvestment.</li>
+            <li><strong>Total Return CAGR %:</strong> CAGR including both price appreciation and dividends. It reflects the compounded annual rate of return for a reinvesting investor.</li>
+            <li><strong>Forecast Price:</strong> The projected stock price at the end of the forecast period.</li>
+            <li><strong>Price Return %:</strong> The return percentage based on stock price appreciation only.</li>
+            <li><strong>Total Returns:</strong> Your expected return based on your holdings and total return percent.</li>
+        </ul>
+        <p id="conversionRateFooter"></p>
+        <p class="text-muted mt-4">This report is generated using the <strong>Investment Analyser</strong>.</p>
+    </div>
+</footer>
+
+<script>
+    document.addEventListener('keyTerminologyReady', async function(event) {
+        const to = event.detail?.to;
+        const fromList = event.detail?.fromList;
+        const convRates = event.detail?.convRates;
+
+        let message = `
+            <strong>Note:</strong> All values are displayed in <strong>${to}</strong> 
+            instead of the actual stock currenc${fromList > 1 ? "ies" : "y"}: 
+        `;
+        let stockCurrencies = [];
+        const seen = new Set();
+
+        for (let i = 0; i < fromList.length ; i++) {
+            const currency = fromList[i];
+            const rate = convRates[i];
+
+            if (currency !== to && !seen.has(currency)) {
+                seen.add(currency);
+                stockCurrencies.push(`
+                    <strong>${currency}</strong> 
+                    (Conversion Rate: <strong>~${parseFloat(rate).toFixed(4)}</strong>)
+                `);
+            }
+        }
+
+        message += stockCurrencies.join(', ');
+
+        $('#conversionRateFooter').html(message);
+    });
+</script>

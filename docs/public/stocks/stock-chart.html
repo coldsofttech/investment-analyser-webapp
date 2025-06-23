@@ -1,0 +1,49 @@
+<h2 class="title">
+    <i class="bi bi-graph-up me-md-0 me-0"></i>
+    Market Journey
+</h2>
+<div class="plotly-chart">
+    <div id="stockInfoChart" class="d-flex justify-content-center align-items-center h-100 text-center"></div>
+</div>
+
+<script>
+    let chartData = null;
+    let chartTitle = null;
+    let chartCurrency = null;
+    let chartShowLegend = false;
+    let chartLogScale = false;
+
+    async function renderResponsiveLineChart() {
+        if (!chartData) {
+            return;
+        }
+
+        await renderLineChart({
+            chartId: 'stockInfoChart',
+            chartTitle: chartTitle,
+            data: chartData,
+            currency: chartCurrency,
+            isLogScale: chartLogScale,
+            showLegend: chartShowLegend,
+            showRangeSlider: !isMobileView()
+        });
+    }
+
+    document.addEventListener('lineChartReady', async function(event) {
+        chartData = event.detail?.data;
+        chartTitle = event.detail?.title || '';
+        chartCurrency = event.detail?.currency || '';
+        chartShowLegend = event.detail?.showLegend || false;
+
+        if (chartData.series.length > 1) {
+            chartShowLegend = true;
+            chartLogScale = true;
+        }
+
+        await renderResponsiveLineChart();
+    });
+
+    window.addEventListener('resize', () => {
+        renderResponsiveLineChart();
+    });
+</script>

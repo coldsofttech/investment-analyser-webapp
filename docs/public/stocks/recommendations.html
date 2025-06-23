@@ -1,0 +1,24 @@
+<div class="row recommendation-box-container">
+    <div class="col-md-6 d-flex">
+        <div class="recommendation-box hold" id="shortTermRecommendationContainer" style="flex: 1;">
+            <strong>Short-Term:</strong> <span id="shortTermRecommendation"></span>
+        </div>
+    </div>
+    <div class="col-md-6 d-flex">
+        <div class="recommendation-box hold" id="longTermRecommendationContainer" style="flex: 1;">
+            <strong>Long-Term:</strong> <span id="longTermRecommendation"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('recommendationsReady', async function(event) {
+        const shortTerm = event.detail?.shortTerm;
+        const longTerm = event.detail?.longTerm;
+
+        $('#shortTermRecommendation').text(`${shortTerm?.comments}. Average CAGR: ${await formatPercentage(shortTerm?.cagr)}.`);
+        $('#shortTermRecommendationContainer').attr('class', `recommendation-box ${riskProfileClasses[shortTerm?.risk]}`);
+        $('#longTermRecommendation').text(`${longTerm?.comments}. Average CAGR: ${await formatPercentage(longTerm?.cagr)}.`);
+        $('#longTermRecommendationContainer').attr('class', `recommendation-box ${riskProfileClasses[longTerm?.risk]}`);
+    });
+</script>

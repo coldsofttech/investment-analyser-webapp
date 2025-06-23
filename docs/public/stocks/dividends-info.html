@@ -1,0 +1,97 @@
+<div id="dividends" class="d-none">
+    <h2 class="title">
+        <i class="bi bi-droplet-half me-md-0 me-0"></i>
+        Dividends
+    </h2>
+    <div class="row">
+        <div id="dividendsTableDesktopView">
+            <table id="dividendsTable" class="display dataTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th class="text-right">Amount <i>(per share)</i></th>
+                        <th class="text-right">Earnings</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <div id="dividendsTableMobileView" class="accordion"></div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('dividendsReady', async function(event) {
+        const data = event.detail?.data;
+        const events = event.detail?.events;
+        const fxRate = event.detail?.fxRate;
+        const stocksOwned = event.detail?.stocksOwned;
+        const defaultCurrency = event.detail?.defaultCurrency;
+
+        if (events?.dividends?.date && events?.dividends?.price) {
+            document.getElementById('dividends').classList.remove('d-none');
+        } else {
+            return document.getElementById('dividends').classList.add('d-none');
+        }
+
+        const dividends = [];
+        const addDividend = (date, price) => {
+            const convertedPrice = price * fxRate;
+            dividends.push({
+                date,
+                price: convertedPrice,
+                earning: stocksOwned > 0 ? stocksOwned * convertedPrice : 0
+            });
+        };
+        const upcoming = event?.dividends;
+        if (upcoming?.date) {
+            addDividend(upcoming.date, upcoming.price);
+        }
+
+        if (data?.length > 0) {
+            const lastFour = data?.slice(-4);
+            lastFour.forEach((item, idx) => addDividend(item.date, item.price));
+        }
+
+        const processedData = await Promise.all(dividends.map(async (row) => {
+            const format = async (val) => val === null ? 'N/A' : await formatCurrency(val, defaultCurrency);
+
+            return {
+                ...row,
+                priceFormatted: await format(row.price),
+                earningFormatted: await format(row.earning)
+            };
+        }));
+
+        const columns = [
+            { data: 'date', title: 'Date' },
+            { data: 'priceFormatted', title: 'Amount <i>(per share)</i>' },
+            { data: 'earningFormatted', title: 'Earnings' }
+        ];
+
+        await renderDataTable({
+            selector: $('#dividendsTable'),
+            data: processedData,
+            columns: columns,
+            rightAlignColumns: [1, 2],
+            hiddenColumns: stocksOwned > 0 ? [] : [2],
+            additionalOptions: {
+                order: [[0, 'desc']],
+                createdRow: function(row, rowData) {
+                    const today = new Date().setHours(0, 0, 0, 0);
+                    const rowDate = new Date(rowData.date).setHours(0, 0, 0, 0);
+                    if (rowDate > today) $(row).addClass('fw-bold');
+                }
+            }
+        });
+
+        await renderDataTableMobileView({
+            elementId: '#dividendsTableMobileView',
+            data: processedData.sort(
+                (a, b) => new Date(b.date) - new Date(a.date)
+            ),
+            columns: columns,
+            titleFields: stocksOwned > 0 ? ['date', 'earningFormatted'] : ['date'],
+            hiddenFields: stocksOwned > 0 ? [] : ['earningFormatted']
+        });
+    });
+</script>
