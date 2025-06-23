@@ -16,7 +16,6 @@ jobs:
   env:
    TARGET_REPO: ${{ github.ref_name == 'main' && 'coldsofttech/investment-analyser' || 'coldsofttech/investment-analyser-test' }}
    TARGET_BRANCH: gh-pages
-   TARGET_PAT: ${{ secrets.TARGET_REPO_PAT_TEST }}
    AUTH0_REPO: coldsofttech/investment-analyser-auth0
    CF_REPO: coldsofttech/investment-analyser-cloudflare
    BRANCH_NAME: ${{ github.ref_name }}
@@ -29,11 +28,19 @@ jobs:
       sudo apt-get install jq
       sudo apt-get install unzip
 
+   - name: Set TARGET_PAT based on branch
+     run: |
+      if [ "${{ github.ref_name }}" == "main" ]; then
+       echo "TARGET_PAT=${{ secrets.TARGET_REPO_PAT }}" >> $GITHUB_ENV
+      else
+       echo "TARGET_PAT=${{ secrets.TARGET_REPO_PAT_TEST }}" >> $GITHUB_ENV
+      fi
+
    - name: Fetch Auth0 Config
      run: |
       echo "Getting latest successful workflow run from ${AUTH0_REPO} on branch ${BRANCH_NAME}..."
       api_url="https://api.github.com/repos/${AUTH0_REPO}/actions/runs?branch=${BRANCH_NAME}&status=success&per_page=1"
-      run_id=$(curl -s -H "Authorization: token ${{ env.TARGET_PAT }}" $api_url | jq -r '.workflow_runs[0].id')
+      run_id=$(curl -s -H "Authorization: token $TARGET_PAT" $api_url | jq -r '.workflow_runs[0].id')
 
       if [ "$run_id" == "null" ]; then
        echo "❌ No successful workflow run found on branch ${BRANCH_NAME} in ${AUTH0_REPO}"
@@ -42,7 +49,7 @@ jobs:
 
       echo "Found workflow run ID: $run_id"
       artifacts_url="https://api.github.com/repos/${AUTH0_REPO}/actions/runs/${run_id}/artifacts"
-      artifact_url=$(curl -s -H "Authorization: token ${{ env.TARGET_PAT }}" $artifacts_url | jq -r '.artifacts[0].archive_download_url')
+      artifact_url=$(curl -s -H "Authorization: token $TARGET_PAT" $artifacts_url | jq -r '.artifacts[0].archive_download_url')
 
       if [ "$artifact_url" == "null" ]; then
        echo "❌ No artifact found in workflow run $run_id"
@@ -51,7 +58,7 @@ jobs:
 
       echo "Downloading artifact from $artifact_url..."
       mkdir -p config-artifacts
-      curl -L -H "Authorization: token ${{ env.TARGET_PAT }}" -o config-artifacts/artifact.zip "$artifact_url"
+      curl -L -H "Authorization: token $TARGET_PAT" -o config-artifacts/artifact.zip "$artifact_url"
 
       echo "Unzipping..."
       unzip -o config-artifacts/artifact.zip -d config-artifacts
@@ -63,7 +70,7 @@ jobs:
      run: |
       echo "Getting latest successful workflow run from ${CF_REPO} on branch ${BRANCH_NAME}..."
       api_url="https://api.github.com/repos/${CF_REPO}/actions/runs?branch=${BRANCH_NAME}&status=success&per_page=1"
-      run_id=$(curl -s -H "Authorization: token ${{ env.TARGET_PAT }}" $api_url | jq -r '.workflow_runs[0].id')
+      run_id=$(curl -s -H "Authorization: token $TARGET_PAT" $api_url | jq -r '.workflow_runs[0].id')
 
       if [ "$run_id" == "null" ]; then
        echo "❌ No successful workflow run found on branch ${BRANCH_NAME} in ${CF_REPO}"
@@ -72,7 +79,7 @@ jobs:
 
       echo "Found workflow run ID: $run_id"
       artifacts_url="https://api.github.com/repos/${CF_REPO}/actions/runs/${run_id}/artifacts"
-      artifact_url=$(curl -s -H "Authorization: token ${{ env.TARGET_PAT }}" $artifacts_url | jq -r '.artifacts[0].archive_download_url')
+      artifact_url=$(curl -s -H "Authorization: token $TARGET_PAT" $artifacts_url | jq -r '.artifacts[0].archive_download_url')
 
       if [ "$artifact_url" == "null" ]; then
        echo "❌ No artifact found in workflow run $run_id"
@@ -81,7 +88,7 @@ jobs:
 
       echo "Downloading artifact from $artifact_url..."
       mkdir -p config-artifacts
-      curl -L -H "Authorization: token ${{ env.TARGET_PAT }}" -o config-artifacts/artifact.zip "$artifact_url"
+      curl -L -H "Authorization: token $TARGET_PAT" -o config-artifacts/artifact.zip "$artifact_url"
 
       echo "Unzipping..."
       unzip -o config-artifacts/artifact.zip -d config-artifacts
