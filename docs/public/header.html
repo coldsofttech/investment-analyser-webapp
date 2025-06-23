@@ -1,5 +1,5 @@
 <h1 class="title">
-    <img id="logo" class="logo" />
+    <img id="logo" class="logo d-none" />
     <span id="title"></span>
 </h1>
 
@@ -9,6 +9,11 @@
         const title = event.detail?.title;
 
         $('#title').text(title);
-        $('#logo').attr('src', logo);
+        if (logo) {
+            $('#logo').attr('src', logo);
+            $('#logo').removeClass('d-none');
+        } else {
+            $('#logo').addClass('d-none');
+        }
     });
 </script>
