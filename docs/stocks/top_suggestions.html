@@ -260,18 +260,10 @@
                                 </div>
                                 <div class="row mb-2">
                                     <div class="col-md-6">
-                                        <strong>Country: </strong> <span class="text-truncate">${t?.country}</span>
-                                    </div>
-                                    <div class="col-md-6">
                                         <strong>Sector: </strong> <span class="text-truncate">${t?.sector}</span>
                                     </div>
-                                </div>
-                                <div class="row mb-2">
                                     <div class="col-md-6">
                                         <strong>Industry: </strong> <span class="text-truncate">${t?.industry}</span>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <strong>Market Cap: </strong> <span class="text-truncate">${await formatCurrency(t?.marketCap, await getCurrency(t?.currency))}</span>
                                     </div>
                                 </div>
                                 <div class="row mb-2">
@@ -280,6 +272,11 @@
                                     </div>
                                     <div class="col-md-6">
                                         <strong>Volatility: </strong> <span class="text-truncate">${t?.volatility}</span>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-6">
+                                        <strong>Market Cap: </strong> <span class="text-truncate">${await formatCurrency(t?.marketCap, await getCurrency(t?.currency))}</span>
                                     </div>
                                 </div>
                                 <div class="row mb-2">
