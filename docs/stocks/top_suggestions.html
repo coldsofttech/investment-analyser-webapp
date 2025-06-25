@@ -343,16 +343,16 @@
 
                     $container.append(card);
                 });
-                
-                $('#suggestions').on('click', '.analyse-btn', function(e) {
-                    e.preventDefault();
-                    const ticker = $(this).data('ticker');
-                    if (ticker) {
-                        const url = `${getRootPath()}stocks/report.html?ticker=${encodeURIComponent(ticker)}`;
-                        window.open(url, "_blank");
-                    }
-                });
             }
+
+            $('#suggestions').on('click', '.analyse-btn', function(e) {
+                e.preventDefault();
+                const ticker = $(this).data('ticker');
+                if (ticker) {
+                    const url = `${getRootPath()}stocks/report.html?ticker=${encodeURIComponent(ticker)}`;
+                    window.open(url, "_blank");
+                }
+            });
         </script>
     </body>
 </html>
