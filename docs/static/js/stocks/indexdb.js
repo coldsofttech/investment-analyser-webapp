@@ -128,6 +128,7 @@ async function clearAllCachedData() {
 
             tx.oncomplete = () => {
                 db.close();
+                sessionStorage.clear();
                 resolve(true);
             };
 
