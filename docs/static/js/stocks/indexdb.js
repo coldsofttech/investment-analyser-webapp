@@ -114,3 +114,29 @@ async function fetchWithCache(requestUrl, headers) {
 
     return data;
 }
+
+async function clearAllCachedData() {
+    try {
+        const db = await openCacheDB();
+
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(['tickers', 'fxrates', 'analysis'], 'readwrite');
+
+            tx.objectStore('tickers').clear();
+            tx.objectStore('fxrates').clear();
+            tx.objectStore('analysis').clear();
+
+            tx.oncomplete = () => {
+                db.close();
+                resolve(true);
+            };
+
+            tx.onerror = () => {
+                db.close();
+                reject(tx.error);
+            };
+        });
+    } catch (err) {
+        throw err;
+    }
+}
