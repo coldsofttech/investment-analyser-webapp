@@ -372,37 +372,58 @@
                         $container.append(card);
                     }
 
-                    if (totalPages > 1) {
-                        const pagination = $(`
+                    const generatePagination = (current, total, onClick) => {
+                        const visiblePages = 5;
+                        const half = Math.floor(visiblePages / 2);
+                        let startPage = Math.max(1, current - half);
+                        let endPage = Math.min(total, startPage + visiblePages - 1);
+
+                        if (endPage - startPage < visiblePages - 1) {
+                            startPage = Math.max(1, endPage - visiblePages + 1);
+                        }
+
+                        const $pagination = $(`
                             <nav class="mt-4">
-                                <ul class="pagination justify-content-center">
-                                    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                                        <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
-                                    </li>
-                                    ${Array.from({ length: totalPages }, (_, i) => `
-                                        <li class="page-item ${currentPage === i + 1 ? 'active' : ''}">
-                                            <a class="page-link" href="#" data-page="${i + 1}">${i + 1}</a>
-                                        </li>
-                                    `).join('')}
-                                    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                                        <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
-                                    <li>
+                                <ul class="pagination justify-content-center flex-wrap">
                                 </ul>
                             </nav>
                         `);
+                        const $ul = $pagination.find('ul');
+                        const createItem = (label, page, disabled = false, active = false) => {
+                            return $(`
+                                <li class="page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}">
+                                    <a class="page-link" href="#" data-page="${page}">${label}</a>
+                                </li>
+                            `);
+                        };
 
-                        $container.append(pagination);
+                        $ul.append(createItem('<<', 1, current === 1));
+                        $ul.append(createItem('<', current - 1, current === 1));
 
-                        pagination.find('.page-link').on('click', function(e) {
+                        for (let i = startPage; i <= endPage; i++) {
+                            $ul.append(createItem(i, i, false, i === current));
+                        }
+
+                        $ul.append(createItem('>', current + 1, current === total));
+                        $ul.append(createItem('>>', total, current === total));
+
+                        $ul.find('.page-link').on('click', function(e) {
                             e.preventDefault();
                             const newPage = parseInt($(this).data('page'));
-                            if (!isNaN(newPage) && newPage !== currentPage) {
-                                renderPage(newPage);
+                            if (!isNaN(newPage) && newPage !== current) {
+                                onClick(newPage);
                                 $('html, body').animate({
-                                    scrollTop: $container.offset().top - 20
+                                    scrollTop: $('#suggestionAccordion').offset().top - 20
                                 }, 300);
                             }
                         });
+
+                        return $pagination;
+                    }
+
+                    if (totalPages > 1) {
+                        const pagination = generatePagination(currentPage, totalPages, renderPage);
+                        $container.append(pagination);
                     }
                 };
 
