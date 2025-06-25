@@ -18,7 +18,7 @@
 <div class="row padding d-none" id="stocksOwned-container">
     <div class="col-md-4">
         <label for="stocksOwned">Stocks Owned</label>
-        <i class="optional-text">(Optional, number of stocks owned)</i>
+        <i class="optional-text" id="stocksOwned-content"></i>
     </div>
     <div class="col-md-8">
         <div class="input-group">
@@ -61,7 +61,9 @@
     document.addEventListener('tickerInputFormReady', async function(event) {
         const detail = event.detail || {};
         const byPercentage = detail.byPercentage || false;
+        const pie = detail.pie || false;
         let avgPriceContent = '';
+        let stocksOwnedContent = '';
 
         if (byPercentage) {
             document.getElementById('percentage-container').classList.remove('d-none');
@@ -72,12 +74,17 @@
         } else {
             document.getElementById('percentage-container').classList.add('d-none');
             document.getElementById('stocksOwned-container').classList.remove('d-none');
-            avgPriceContent = `
-                (Required if Stocks Owned is provided, in <span id="currency"></span>)
-            `;
+            if (pie) {
+                stocksOwnedContent = `(Required, number of stocks owned)`;
+                avgPriceContent = `(Required, in <span id="currency"></span>)`;
+            } else {
+                stocksOwnedContent = `(Optional, number of stocks owned)`;
+                avgPriceContent = `(Required if Stocks Owned is provided, in <span id="currency"></span>)`;
+            }
         }
 
         $('#avgPrice-content').html(avgPriceContent);
+        $('#stocksOwned-content').html(stocksOwnedContent);
         await getDefaultCurrency(customCurrency = '#currency', customSymbol = '#currencySymbol');
 
         await validateTicker('#ticker');
