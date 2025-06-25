@@ -314,7 +314,8 @@
                         eventType: 'CustomEvent',
                         eventName: 'tickerInputFormReady',
                         detail: {
-                            byPercentage: byPercentageGlobal
+                            byPercentage: byPercentageGlobal,
+                            pie: true
                         }
                     });
 
@@ -675,6 +676,7 @@
                     const name = $('#name').val().trim();
                     const noOfStocks = $('#noOfStocks').val();
                     const by = byPercentageGlobal ? 'percentage' : 'stocksOwned';
+                    const pieAmount = $('#pieAmount').val();
 
                     const urlParams = new URLSearchParams(window.location.search);
                     const instruments = inputTable.rows().data().toArray().map(row => {

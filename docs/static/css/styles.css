@@ -59,8 +59,9 @@ h4.title {
 }
 
 .logo {
-    width: 64px;
+    max-width: 64px;
     height: auto;
+    object-fit: contain;
 }
 
 #loading-overlay {
@@ -592,8 +593,9 @@ input:checked + .slider:before {
     }
 
     .logo {
-        width: 40px;
+        max-width: 40px;
         height: auto;
+        object-fit: contain;
     }
 
     .card-title {
