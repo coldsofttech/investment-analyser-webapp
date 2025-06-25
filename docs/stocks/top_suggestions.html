@@ -204,142 +204,209 @@
 
             async function renderSuggestions(tickers, useLongTerm = true) {
                 const $container = $('#suggestionAccordion');
-                $container.empty();
+                const defaultPerPage = 10;
+                let currentPage = 1;
+                let perPage = defaultPerPage;
 
-                if (!tickers || tickers.length === 0) {
-                    $container.html('<div class="alert alert-info">No suggestions match the current filters.</div>');
-                    return;
-                }
+                const renderPage = async (page) => {
+                    $container.empty();
+                    currentPage = page;
 
-                tickers.forEach(async (t) => {
-                    const cagrProp = useLongTerm ? 'longTermCagr' : 'shortTermCagr';
-                    const growthClass = t[cagrProp] > 0 ? 'text-success' : 'text-danger';
-                    const growthSymbol = t[cagrProp] > 0 ? '+' : '';
-                    const detailsId = `details-${t?.ticker}`;
-
-                    const buyRecommendation = (down, cagr) => {
-                        if (down && cagr >= 5) {
-                            return `
-                                <button type="button" class="btn btn-custom-blue recom-btn">
-                                    <i class="bi bi-patch-check-fill"></i>
-                                </button>
-                            `;
-                        } else {
-                            return '';
-                        }
+                    if (!tickers || tickers.length === 0) {
+                        $container.html('<div class="alert alert-info">No suggestions match the current filters.</div>');
+                        return;
                     }
-                    const card = $(`
-                        <div class="suggestion-card card mb-3 shadow-sm">
-                            <div class="card-header clickable d-flex align-items-center justify-content-between"
-                                 data-bs-toggle="collapse" data-bs-target="#${detailsId}" aria-expanded="false" 
-                                 style="cursor: pointer;">
-                                <div class="d-flex align-items-center gap-3">
-                                    <img src="${await renderLogo(t?.website, t?.companyName)}" class="logo" />
-                                    <div>
-                                        <h5 class="mb-1 fw-bold card-title pe-2">${t?.companyName}</h5>
-                                        <h6 class="card-subtitle mb-0 text-muted">${t?.ticker}</h6>
-                                    </div>
-                                </div>
-                                <div class="text-end">
-                                    <div class="fw-bold fs-5 ${growthClass} text-nowrap">${growthSymbol}${t[cagrProp].toFixed(2)}</div>
-                                    <div class="fs-6 text-muted text-nowrap">${await formatCurrency(t?.currentPrice, await getCurrency(t?.currency))}</div>
-                                    <button class="btn btn-sm btn-link toggle-details p-0 mt-1" data-bs-toggle="collapse"
-                                            data-bs-target="#${detailsId}" aria-expanded="false">
-                                        <i class="bi bi-chevron-down"></i>
+
+                    const totalPages = Math.ceil(tickers.length / perPage);
+                    const start = (page - 1) * perPage;
+                    const end = page * perPage;
+                    const currentPageTickers = tickers.slice(start, end);
+
+                    const perPageSelector = $(`
+                        <div class="d-flex justify-content-end align-items-center mb-3">
+                            <label for="perPageSelect" class="me-2 mb-0">Results per page:</label>
+                            <select id="perPageSelect" class="form-select form-select-sm w-auto">
+                                <option value="10" ${perPage === 10 ? 'selected' : ''}>10</option>
+                                <option value="25" ${perPage === 25 ? 'selected' : ''}>25</option>
+                                <option value="50" ${perPage === 50 ? 'selected' : ''}>50</option>
+                                <option value="100" ${perPage === 100 ? 'selected' : ''}>100</option>
+                            </select>
+                        </div>
+                    `);
+                    $container.append(perPageSelector);
+
+                    perPageSelector.find('#perPageSelect').on('change', function() {
+                        perPage = parseInt($(this).val());
+                        currentPage = 1;
+                        renderPage(currentPage);
+                    });
+
+                    for (const t of currentPageTickers) {
+                        const cagrProp = useLongTerm ? 'longTermCagr' : 'shortTermCagr';
+                        const growthClass = t[cagrProp] > 0 ? 'text-success' : 'text-danger';
+                        const growthSymbol = t[cagrProp] > 0 ? '+' : '';
+                        const detailsId = `details-${t?.ticker}`;
+
+                        const buyRecommendation = (down, cagr) => {
+                            if (down && cagr >= 5) {
+                                return `
+                                    <button type="button" class="btn btn-custom-blue recom-btn">
+                                        <i class="bi bi-patch-check-fill"></i>
                                     </button>
-                                </div>
-                            </div>
-                            <div id="${detailsId}" class="card-body collapse px-3 pb-3" data-bs-parent="#suggestionAccordion">
-                                <div class="row mb-2">
-                                    <div class="col-md-6">
-                                        <strong>Type: </strong> <span class="text-truncate">${t?.type}</span>
+                                `;
+                            } else {
+                                return '';
+                            }
+                        }
+
+                        const card = $(`
+                            <div class="suggestion-card card mb-3 shadow-sm">
+                                <div class="card-header clickable d-flex align-items-center justify-content-between"
+                                    data-bs-toggle="collapse" data-bs-target="#${detailsId}" aria-expanded="false" 
+                                    style="cursor: pointer;">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <img src="${await renderLogo(t?.website, t?.companyName)}" class="logo" />
+                                        <div>
+                                            <h5 class="mb-1 fw-bold card-title pe-2">${t?.companyName}</h5>
+                                            <h6 class="card-subtitle mb-0 text-muted">${t?.ticker}</h6>
+                                        </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <strong>Exchange: </strong> <span class="text-truncate">${t?.exchange}</span>
-                                    </div>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="col-md-6">
-                                        <strong>Sector: </strong> <span class="text-truncate">${t?.sector}</span>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <strong>Industry: </strong> <span class="text-truncate">${t?.industry}</span>
-                                    </div>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="col-md-6">
-                                        <strong>Beta: </strong> <span class="text-truncate">${t?.beta}</span>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <strong>Volatility: </strong> <span class="text-truncate">${t?.volatility}</span>
-                                    </div>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="col-md-6">
-                                        <strong>Market Cap: </strong> <span class="text-truncate">${await formatCurrency(t?.marketCap, await getCurrency(t?.currency))}</span>
-                                    </div>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="col-md-6">
-                                        <strong>Dividend Yield: </strong> <span class="text-truncate">${await formatPercentage(t?.dividendYield)}</span>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <strong>Dividend Frequency: </strong> <span class="text-truncate">${t?.dividendFrequency}</span>
-                                    </div>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="col-md-6">
-                                        <strong>Short Term Growth: </strong> <span class="text-truncate">${await formatPercentage(t?.shortTermCagr)}</span>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <strong>Long Term Growth: </strong> <span class="text-truncate">${await formatPercentage(t?.longTermCagr)}</span>
-                                    </div>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="col-md-12 text-right">
-                                        ${buyRecommendation(t?.isDowngrading, t[cagrProp])}
-                                        <button type="button" id="btn-${t?.ticker}" class="btn btn-custom-blue analyse-btn" 
-                                                title="Analyse" data-ticker="${t?.ticker}">
-                                            <i class="bi bi-clipboard2-data me-md-0 me-0"></i>
+                                    <div class="text-end">
+                                        <div class="fw-bold fs-5 ${growthClass} text-nowrap">${growthSymbol}${t[cagrProp].toFixed(2)}</div>
+                                        <div class="fs-6 text-muted text-nowrap">${await formatCurrency(t?.currentPrice, await getCurrency(t?.currency))}</div>
+                                        <button class="btn btn-sm btn-link toggle-details p-0 mt-1" data-bs-toggle="collapse"
+                                                data-bs-target="#${detailsId}" aria-expanded="false">
+                                            <i class="bi bi-chevron-down"></i>
                                         </button>
                                     </div>
                                 </div>
+                                <div id="${detailsId}" class="card-body collapse px-3 pb-3" data-bs-parent="#suggestionAccordion">
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <strong>Type: </strong> <span class="text-truncate">${t?.type}</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Exchange: </strong> <span class="text-truncate">${t?.exchange}</span>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <strong>Sector: </strong> <span class="text-truncate">${t?.sector}</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Industry: </strong> <span class="text-truncate">${t?.industry}</span>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <strong>Beta: </strong> <span class="text-truncate">${t?.beta}</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Volatility: </strong> <span class="text-truncate">${t?.volatility}</span>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <strong>Market Cap: </strong> <span class="text-truncate">${await formatCurrency(t?.marketCap, await getCurrency(t?.currency))}</span>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <strong>Dividend Yield: </strong> <span class="text-truncate">${await formatPercentage(t?.dividendYield)}</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Dividend Frequency: </strong> <span class="text-truncate">${t?.dividendFrequency}</span>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <strong>Short Term Growth: </strong> <span class="text-truncate">${await formatPercentage(t?.shortTermCagr)}</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Long Term Growth: </strong> <span class="text-truncate">${await formatPercentage(t?.longTermCagr)}</span>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-12 text-right">
+                                            ${buyRecommendation(t?.isDowngrading, t[cagrProp])}
+                                            <button type="button" id="btn-${t?.ticker}" class="btn btn-custom-blue analyse-btn" 
+                                                    title="Analyse" data-ticker="${t?.ticker}">
+                                                <i class="bi bi-clipboard2-data me-md-0 me-0"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    `);
+                        `);
+                        
+                        card.find('.toggle-details').on('click', function(e) {
+                            e.stopPropagation();
+                            $(this).find('i').toggleClass('bi-chevron-down bi-chevron-up');
+                        });
 
-                    card.find('.toggle-details').on('click', function(e) {
-                        e.stopPropagation();
-                        $(this).find('i').toggleClass('bi-chevron-down bi-chevron-up');
-                    });
+                        const $collapse = card.find(`#${detailsId}`);
+                        $collapse.on('shown.bs.collapse', () => {
+                            card.find('.toggle-details i').removeClass('bi-chevron-down').addClass('bi-chevron-up');
+                        });
+                        $collapse.on('hidden.bs.collapse', () => {
+                            card.find('.toggle-details i').removeClass('bi-chevron-up').addClass('bi-chevron-down');
+                        });
 
-                    const $collapse = card.find(`#${detailsId}`);
-                    $collapse.on('shown.bs.collapse', () => {
-                        card.find('.toggle-details i').removeClass('bi-chevron-down').addClass('bi-chevron-up');
-                    });
-                    $collapse.on('hidden.bs.collapse', () => {
-                        card.find('.toggle-details i').removeClass('bi-chevron-up').addClass('bi-chevron-down');
-                    });
+                        card.find('.read-more').on('click', function(e) {
+                            e.preventDefault();
+                            const $short = card.find('.short-text');
+                            const $full = card.find('.full-text');
+                            const $link = $(this);
 
-                    card.find('.read-more').on('click', function(e) {
-                        e.preventDefault();
-                        const $short = card.find('.short-text');
-                        const $full = card.find('.full-text');
-                        const $link = $(this);
+                            if ($full.hasClass('d-none')) {
+                                $full.removeClass('d-none');
+                                $short.addClass('d-none');
+                                $link.text('Read less');
+                            } else {
+                                $full.addClass('d-none');
+                                $short.removeClass('d-none');
+                                $link.text('Read more...');
+                            }
+                        });
 
-                        if ($full.hasClass('d-none')) {
-                            $full.removeClass('d-none');
-                            $short.addClass('d-none');
-                            $link.text('Read less');
-                        } else {
-                            $full.addClass('d-none');
-                            $short.removeClass('d-none');
-                            $link.text('Read more...');
-                        }
-                    });
+                        $container.append(card);
+                    }
 
-                    $container.append(card);
-                });
+                    if (totalPages > 1) {
+                        const pagination = $(`
+                            <nav class="mt-4">
+                                <ul class="pagination justify-content-center">
+                                    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                                        <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+                                    </li>
+                                    ${Array.from({ length: totalPages }, (_, i) => `
+                                        <li class="page-item ${currentPage === i + 1 ? 'active' : ''}">
+                                            <a class="page-link" href="#" data-page="${i + 1}">${i + 1}</a>
+                                        </li>
+                                    `).join('')}
+                                    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                                        <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+                                    <li>
+                                </ul>
+                            </nav>
+                        `);
+
+                        $container.append(pagination);
+
+                        pagination.find('.page-link').on('click', function(e) {
+                            e.preventDefault();
+                            const newPage = parseInt($(this).data('page'));
+                            if (!isNaN(newPage) && newPage !== currentPage) {
+                                renderPage(newPage);
+                                $('html, body').animate({
+                                    scrollTop: $container.offset().top - 20
+                                }, 300);
+                            }
+                        });
+                    }
+                };
+
+                renderPage(currentPage);
             }
 
             $('#suggestions').on('click', '.analyse-btn', function(e) {
